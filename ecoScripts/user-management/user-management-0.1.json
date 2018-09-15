@@ -6,43 +6,6 @@
     "docker_image": "ecohub/usermgmt:v0.1",
     "config_parameters": [
         {
-            "name": "activedirectory_parameters",
-            "label": "Active Directory",
-            "order": 2,
-            "items": [
-                {
-                    "name": "binduser",
-                    "label": "Bind username",
-                    "type": "text",
-                    "environment_variable_name": "BIND_USER",
-                    "required": true,
-                    "placeholder": "ADbindAdminPriv",
-                    "order": 1,
-                    "verify": true
-                },
-                {
-                    "name": "bindpassword",
-                    "label": "Bind user password",
-                    "type": "password",
-                    "environment_variable_name": "BIND_PASSWORD",
-                    "required": true,
-                    "placeholder": "bind password",
-                    "order": 2,
-                    "verify": true
-                },
-                {
-                    "name": "ad_ipaddr",
-                    "label": "Primary AD IP address",
-                    "type": "text",
-                    "environment_variable_name": "AD_IPADDR",
-                    "required": true,
-                    "placeholder": "172.16.1.90",
-                    "order": 3,
-                    "verify": true
-                }
-            ]
-        },
-        {
             "name": "user_parameters",
             "label": "User Parameters",
             "order": 1,
@@ -112,9 +75,46 @@
             ]
         },
         {
+            "name": "activedirectory_parameters",
+            "label": "Active Directory",
+            "order": 2,
+            "items": [
+                {
+                    "name": "binduser",
+                    "label": "Bind username",
+                    "type": "text",
+                    "environment_variable_name": "BIND_USER",
+                    "required": true,
+                    "placeholder": "ADbindAdminPriv",
+                    "order": 1,
+                    "verify": true
+                },
+                {
+                    "name": "bindpassword",
+                    "label": "Bind user password",
+                    "type": "password",
+                    "environment_variable_name": "BIND_PASSWORD",
+                    "required": true,
+                    "placeholder": "bind password",
+                    "order": 2,
+                    "verify": true
+                },
+                {
+                    "name": "ad_ipaddr",
+                    "label": "Primary AD IP address",
+                    "type": "text",
+                    "environment_variable_name": "AD_IPADDR",
+                    "required": true,
+                    "placeholder": "172.16.1.90",
+                    "order": 3,
+                    "verify": true
+                }
+            ]
+        },
+        {
             "name": "guacamole_parameters",
             "label": "Guacamole",
-            "order": 3,
+            "order": 2,
             "items": [
                 {
                     "name": "guacdbhost",
@@ -171,7 +171,7 @@
         {
             "name": "aci_parameters",
             "label": "ACI",
-            "order": 4,
+            "order": 2,
             "items": [
                 {
                     "name": "apicurl",
