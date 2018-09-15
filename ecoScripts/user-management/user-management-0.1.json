@@ -8,7 +8,7 @@
         {
             "name": "activedirectory_parameters",
             "label": "Active Directory",
-            "order": 1,
+            "order": 2,
             "items": [
                 {
                     "name": "binduser",
@@ -45,7 +45,7 @@
         {
             "name": "user_parameters",
             "label": "User Parameters",
-            "order": 2,
+            "order": 1,
             "controls": [
                 {
                     "label": "Create user",
@@ -164,6 +164,43 @@
                     "required": true,
                     "placeholder": "guac_db",
                     "order": 5,
+                    "verify": true
+                }
+            ]
+        },
+        {
+            "name": "aci_parameters",
+            "label": "ACI",
+            "order": 4,
+            "items": [
+                {
+                    "name": "apicurl",
+                    "label": "APIC URL",
+                    "type": "text",
+                    "environment_variable_name": "APIC_URL",
+                    "required": true,
+                    "placeholder": "http://172.16.107.11",
+                    "order": 1,
+                    "verify": true
+                },
+                {
+                    "name": "apicusername",
+                    "label": "APIC Username",
+                    "type": "text",
+                    "environment_variable_name": "APIC_USERNAME",
+                    "required": true,
+                    "placeholder": "apic#Local\\ucsd_aci_mgmt",
+                    "order": 2,
+                    "verify": true
+                },
+                {
+                    "name": "apicpassword",
+                    "label": "APIC Password",
+                    "type": "password",
+                    "environment_variable_name": "APIC_PASSWORD",
+                    "required": true,
+                    "placeholder": "password",
+                    "order": 3,
                     "verify": true
                 }
             ]
