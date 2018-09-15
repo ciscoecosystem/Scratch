@@ -174,7 +174,7 @@ class AWX(object):
                 resp = self.wait_on_jobs(jobs)
                 if resp['status'] != 'success':
                     return resp
-        return {'status': 'success'}
+        return {'status': 'success', 'message': 'Successfully completed all AWX tasks'}
     
     def wait_on_jobs(self, jobs, timeout=1200):
         run_time = 0
