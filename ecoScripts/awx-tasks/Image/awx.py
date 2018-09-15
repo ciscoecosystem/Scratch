@@ -8,6 +8,7 @@ import os
 from jsonschema import validate
 import time
 import re
+from pigeon import Pigeon
 
 requests.packages.urllib3.disable_warnings()
 
@@ -29,6 +30,7 @@ class AWX(object):
         def get_env(value, key):
             return os.getenv(key, value)
         self.jinja.filters['get_env'] = get_env
+        self.pigeon = Pigeon()
 
     def test_connectivity(self):
         resp = self.session.get(self.uri + 'ping')
@@ -183,6 +185,7 @@ class AWX(object):
             if resp.status_code == 200:
                 pending = False
                 for job in resp.json()['results']:
+                    self.pigeon.sendInfoMessage('Status for job: {} is {}'.format(job['id'],job['status']))
                     # print 'Status for job: {} is {}'.format(job['id'],job['status'])
                     if job['failed']:
                         return {'status': 'error', 'message': 'Job {} failed to complete'.format(job['id'])}
