@@ -57,8 +57,9 @@ print_message(pigeon)
 
 if os.getenv('ACTION'):
 
-    if os.environ['ACTION'] == 'TEST_CONNECTIVITY':
-        subprocess.call(["python", "test_connectivity.py"])
+    if os.environ['ACTION'] == 'VERIFY':
+        pigeon['message'] = "Skipping connectivity tests."
+        pigeon['status_code'] = 200
     elif os.environ['ACTION'] == 'RUN_INTEGRATION':
         subprocess.call(["python", "get_scope_ips.py"])
         subprocess.call(["pwsh", "Get-Inventory.ps1"])
