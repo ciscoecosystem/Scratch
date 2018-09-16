@@ -204,6 +204,24 @@
                     "verify": true
                 }
             ]
+        },
+        {
+            "name": "tetration_parameters",
+            "label": "Tetration",
+            "order": 5,
+            "items": [
+                {
+                    "name": "tetrationroles",
+                    "label": "Additional roles",
+                    "type": "fetch-list",
+                    "fetch-target": "ROLES",
+                    "environment_variable_name": "TETRATION_ROLES",
+                    "required": true,
+                    "placeholder": "additional role",
+                    "order": 1,
+                    "verify": true
+                }
+            ]
         }
     ]
 }
