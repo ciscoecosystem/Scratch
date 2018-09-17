@@ -1,0 +1,27 @@
+---
+
+# =============================================================================
+# PLAY - Build local inventory file
+# -----------------------------------------------------------------------------
+
+- name: Build local inventory file
+  hosts: localhost
+  gather_facts: no
+  vars:
+    server_ip: "{{ lookup('env', 'AD_IPADDR') }}"
+    server_username: "{{ lookup('env', 'BIND_USER') }}"
+    server_password: "{{ lookup('env', 'BIND_PASSWORD') }}"
+  tasks:
+
+  # - debug: var=server_ip
+
+  # - debug: var=server_username
+
+  # - debug: var=server_password
+
+  - name: Create file
+    template:
+      src: /app/templates/inventory_template
+      dest: /app/inventory/windows
+    no_log: True
+

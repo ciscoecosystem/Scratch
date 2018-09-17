@@ -12,7 +12,7 @@
             "controls": [
                 {
                     "label": "Create user",
-                    "action": "user_create",
+                    "action": "USER_CREATE",
                     "message": "Creating new user",
                     "type": "icon",
                     "icon": {
@@ -22,7 +22,7 @@
                 },
                 {
                     "label": "Delete user",
-                    "action": "user_delete",
+                    "action": "USER_DELETE",
                     "message": "Deleting user",
                     "type": "icon",
                     "icon": {
@@ -32,7 +32,7 @@
                 },
                 {
                     "label": "Password reset",
-                    "action": "user_pwd_reset",
+                    "action": "USER_PWD_RESET",
                     "message": "Resetting password",
                     "type": "icon",
                     "icon": {
@@ -67,7 +67,7 @@
                     "label": "CEC ID",
                     "type": "text",
                     "environment_variable_name": "USER_USERID",
-                    "required": true,
+                    "required": false,
                     "placeholder": "user ID",
                     "order": 3,
                     "verify": true
@@ -76,9 +76,19 @@
         },
         {
             "name": "activedirectory_parameters",
-            "label": "Active Directory",
+            "label": "Active Directory (172.16.1.90)",
             "order": 2,
             "items": [
+                {
+                    "name": "adipaddr",
+                    "label": "Primary IP address",
+                    "type": "text",
+                    "environment_variable_name": "AD_IPADDR",
+                    "required": true,
+                    "placeholder": "172.16.1.90",
+                    "order": 1,
+                    "verify": true
+                },
                 {
                     "name": "binduser",
                     "label": "Bind username",
@@ -86,7 +96,7 @@
                     "environment_variable_name": "BIND_USER",
                     "required": true,
                     "placeholder": "ADbindAdminPriv",
-                    "order": 1,
+                    "order": 2,
                     "verify": true
                 },
                 {
@@ -96,16 +106,6 @@
                     "environment_variable_name": "BIND_PASSWORD",
                     "required": true,
                     "placeholder": "bind password",
-                    "order": 2,
-                    "verify": true
-                },
-                {
-                    "name": "ad_ipaddr",
-                    "label": "Primary AD IP address",
-                    "type": "text",
-                    "environment_variable_name": "AD_IPADDR",
-                    "required": true,
-                    "placeholder": "172.16.1.90",
                     "order": 3,
                     "verify": true
                 }
@@ -217,7 +217,7 @@
                     "fetch-target": "ROLES",
                     "environment_variable_name": "TETRATION_ROLES",
                     "required": true,
-                    "placeholder": "additional role",
+                    "placeholder": "additional roles to add to user",
                     "order": 1,
                     "verify": true
                 }

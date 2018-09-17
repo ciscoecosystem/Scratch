@@ -57,27 +57,18 @@ print_message(pigeon)
 
 if os.getenv('ACTION'):
 
+    subprocess.call(["ansible-playbook", "build-inventory-file.yml"])
+
     if os.environ['ACTION'] == 'VERIFY':
         pigeon['message'] = "Skipping connectivity tests."
         pigeon['status_code'] = 200
-    elif os.environ['ACTION'] == 'RUN_INTEGRATION':
-        subprocess.call(["python", "get_scope_ips.py"])
-        subprocess.call(["pwsh", "Get-Inventory.ps1"])
-        subprocess.call(["python", "upload_annotations.py"])
-    elif os.environ['ACTION'] == 'CLEAR_CACHE':
-        for file in glob.glob("/private/*.txt"):
-            os.remove(file)
-        for file in glob.glob("/private/*.csv"):
-            os.remove(file)
-        pigeon['message'] = "Local cache of annotations deleted."
-        pigeon['status_code'] = 200
-        print_message(pigeon)
+
     elif os.environ['ACTION'] == 'FETCH_ITEMS':
         subprocess.call(["python", "fetch_items.py"])
-    elif os.environ['ACTION'] == 'CUSTOM':
-        pigeon['message'] = "Requested action CUSTOM not implemented."
-        pigeon['status_code'] = 400
-        print_message(pigeon)
+
+    elif os.environ['ACTION'] == 'USER_PWD_RESET':
+        subprocess.call(["ansible-playbook", "auslab-reset-password.yml"])
+
     else:
         pigeon['message'] = "Requested action not recognized."
         pigeon['status_code'] = 404
