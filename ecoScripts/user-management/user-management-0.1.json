@@ -214,7 +214,7 @@
                     "name": "tetrationroles",
                     "label": "Additional roles",
                     "type": "fetch-list",
-                    "fetch-target": "ROLES",
+                    "fetch_target": "ROLES",
                     "environment_variable_name": "TETRATION_ROLES",
                     "required": true,
                     "placeholder": "additional roles to add to user",
