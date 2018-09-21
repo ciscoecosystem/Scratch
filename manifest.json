@@ -45,7 +45,7 @@
         "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/deployment-management",
         "icon": "icon.png",
         "tags": "ansible",
-        "required_targets": [""]
+        "required_targets": ["awx", "tetration"]
     },
     {
         "name": "user-management",
