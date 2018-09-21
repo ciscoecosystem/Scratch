@@ -14,6 +14,8 @@ requests.packages.urllib3.disable_warnings()
 
 # Globals
 DEPLOYMENT_SETTINGS_SCHEMA = 'deployment_settings_schema.json'
+DELETE_DEPLOYMENT_TEMPLATE = 'Delete Deployment'
+DELETE_INVENTORY_TEMPLATE = 'Delete Inventory'
 
 class AWX(object):
     def __init__(self, endpoint, token):
@@ -73,6 +75,12 @@ class AWX(object):
         if resp.status_code == 200:
             return {'status':'exists', 'inventory': resp.json()['results'][0]} if resp.json()['count'] == 1 else {'status': 'unknown'}
         return {'status': 'unknown'}
+
+    def get_inventory_vars(self, inventory_id):
+        resp = self.session.get(self.uri + 'inventories/{}/variable_data/'.format(inventory_id))
+        if resp.status_code == 200:
+            return {'status':'success', 'vars': resp.json()}
+        return {'status': 'unknown', 'message': 'Unable to find inventory vars for {}'.format(inventory_id)}
 
     def fetch_inventories(self,nameOnly=False):
         resp = self.session.get(self.uri + 'inventories')
@@ -149,7 +157,7 @@ class AWX(object):
             validated_settings.append(current_setting)
         return {'status': 'success', 'settings': validated_settings, 'message': 'Validation Successful'}
 
-    def run_deployment(self, templates, extra_vars):
+    def run_templates(self, templates, extra_vars):
         for template in templates:
             if 'inventory' in template:
                 resp = self.get_inventory(template['inventory'])
@@ -198,3 +206,67 @@ class AWX(object):
             time.sleep(10)
             run_time = int(time.time() - start)
         return {'status': 'error', 'message': 'A timeout occurred while waiting for jobs'}
+
+    def get_deployment_details(self, deployment_id):
+        inventory = {}
+        resp = self.get_inventory(deployment_id)
+        if resp['status'] == 'unknown':
+            return {'status': 'error', 'message': 'Unable to find inventory for: {}'.format(deployment_id)}
+        inventory['id'] = resp['inventory']['id']
+        resp = self.get_inventory_vars(inventory['id'])
+        if resp['status'] != 'success':
+            return resp
+        inventory['vars'] = resp['vars']
+        inventory['vars']['deployment_id'] = deployment_id
+        return {'status':'success', 'message':'Retrieved deployment details from AWX', 'inventory':inventory}
+
+    def delete_deployment(self, inventory):
+        resp = self.get_template(DELETE_DEPLOYMENT_TEMPLATE)
+        if resp['status'] == 'unknown':
+            return {'status': 'error', 'message': 'Unknown template name: {}'.format(DELETE_DEPLOYMENT_TEMPLATE)}
+        template = resp['template']['id']
+        credentials = []
+        for credential in inventory['vars']['credentials']:
+            resp = self.get_credential(credential)
+            if resp['status'] == 'unknown':
+                return {'status': 'error', 'message': 'Unknown credential name: {}'.format(credential)}
+            credentials.append(resp['credential']['id'])
+        del inventory['vars']['credentials']
+        if 'ansible_ssh_common_args' in inventory['vars']:
+            del inventory['vars']['ansible_ssh_common_args']
+        resp = self.launch_template(
+            id=template,
+            extra_vars={'workflow_vars': inventory['vars']},
+            credentials=credentials if credentials else None,
+            inventory=inventory['id']
+        )
+        jobs = []
+        if resp.status_code == 201:
+            jobs.append(resp.json()['id'])
+        else:
+            print resp.status_code
+            return {'status': 'error', 'message': 'Failed to launch job for: {}'.format(DELETE_DEPLOYMENT_TEMPLATE)}
+        resp = self.wait_on_jobs(jobs)
+        if resp['status'] != 'success':
+            return resp
+        # Delete inventory
+        resp = self.get_template(DELETE_INVENTORY_TEMPLATE)
+        if resp['status'] == 'unknown':
+            return {'status': 'error', 'message': 'Unknown template name: {}'.format(DELETE_INVENTORY_TEMPLATE)}
+        template = resp['template']['id']
+        resp = self.launch_template(
+            id=template,
+            extra_vars={'workflow_vars': inventory['vars']},
+            credentials=None,
+            inventory=None
+        )
+        jobs = []
+        if resp.status_code == 201:
+            jobs.append(resp.json()['id'])
+        else:
+            print resp.status_code
+            return {'status': 'error', 'message': 'Failed to launch job for: {}'.format(DELETE_INVENTORY_TEMPLATE)}
+        resp = self.wait_on_jobs(jobs)
+        if resp['status'] != 'success':
+            return resp
+        return {'status': 'success', 'message': 'Successfully deleted deployment {}'.format(inventory['id'])}

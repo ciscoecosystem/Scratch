@@ -1,9 +1,9 @@
 {
-    "version": "0.1",
+    "version": "1.0",
     "type": "api",
     "configurable": true,
     "schedulable": true,
-    "docker_image": "ecohub/awx_tasks:0.10",
+    "docker_image": "ecohub/awx_tasks:0.11",
     "config_parameters": [
         {
             "name": "workflow_tasks",
@@ -108,7 +108,27 @@
                     "type": "editor",
                     "sub_type": "yaml",
                     "environment_variable_name": "AWX_WORKFLOW_VARS",
-                    "required": true,
+                    "required": false,
+                    "placeholder": "",
+                    "order": 1,
+                    "verify": false
+                }
+            ]
+        },
+        {
+            "name": "deployment_vars",
+            "label": "Deployment Variables",
+            "order": 1,
+            "controls": [
+            ],
+            "items": [
+                {
+                    "name": "deployment_var_list",
+                    "label": "Deployment Var List (YAML)",
+                    "type": "editor",
+                    "sub_type": "yaml",
+                    "environment_variable_name": "DEPLOYMENT_VARS",
+                    "required": false,
                     "placeholder": "",
                     "order": 1,
                     "verify": false

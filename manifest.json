@@ -25,11 +25,11 @@
     },
     {
         "name": "awx-tasks",
-        "label": "AWX Task Automator (wip)",
+        "label": "AWX Task Automator",
         "versions": [
-            "0.1"
+            "1.0"
         ],
-        "latest": "0.1",
+        "latest": "1.0",
         "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/awx-tasks",
         "icon": "icon.png",
         "tags": "ansible",

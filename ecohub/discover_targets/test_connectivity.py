@@ -36,7 +36,7 @@ def test_tetration():
     (which will be an empty string if there are no errors)
     '''
     requests.packages.urllib3.disable_warnings()
-    status = 200
+    status = 204
     return_msg = "Tetration connectivity verified."
 
     restclient = RestClient(
@@ -57,7 +57,7 @@ def test_tetration():
         status = 400
         return_msg = "Unknown error connecting to Tetration"
     else:
-        status = resp.status_code
+        status = 204 if resp.status_code == 200 else resp.status_code
         # this doesn't work if the Tetration endpoint is specified as a valid
         # website (but not a TA endpoint) because it returns all of the HTML
         # for the whole website
