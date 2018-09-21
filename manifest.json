@@ -36,7 +36,7 @@
         "required_targets": ["awx"]
     },
     {
-        "name": "deployment-tasks",
+        "name": "deployment-management",
         "label": "Deployment Management (wip)",
         "versions": [
             "0.1"
