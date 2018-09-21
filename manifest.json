@@ -37,7 +37,7 @@
     },
     {
         "name": "deployment-tasks",
-        "label": "User Deployment Management (wip)",
+        "label": "Deployment Management (wip)",
         "versions": [
             "0.1"
         ],
