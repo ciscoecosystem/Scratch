@@ -57,6 +57,6 @@
         "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/user-management",
         "icon": "icon.png",
         "tags": "user",
-        "required_targets": ["awx"]
+        "required_targets": ["tetration"]
     }
 ]

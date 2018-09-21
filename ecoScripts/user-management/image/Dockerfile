@@ -20,5 +20,5 @@ RUN rm -f get-pip.py
 RUN rm -Rf acitoolkit/
 
 # run the app when the container launches
-ENTRYPOINT [ "/bin/bash" ]
-# ENTRYPOINT [ "python", "eco_action.py" ]
+# ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "python", "eco_action.py" ]

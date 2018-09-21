@@ -14,6 +14,7 @@ The specified user account will be added to:
 - Active Directory
 - Guacamole
 - Tetration (Perseus)
+- ACI
 - vCenter
 
 If the specified user account already exists in any of the above steps, it will not be modified.
@@ -25,6 +26,7 @@ The specified user account will be removed from:
 - Active Directory
 - Guacamole
 - Tetration (Perseus)
+- ACI
 
 ## Reset user password
 
