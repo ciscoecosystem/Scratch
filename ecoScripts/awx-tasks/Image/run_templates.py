@@ -1,4 +1,4 @@
-from os import getenv
+from os import getenv, environ
 from awx import AWX
 from pigeon import Pigeon
 import json
@@ -29,6 +29,8 @@ def main():
         extra_vars = {
             'deployment_vars': DEPLOYMENT_VARS
         }
+        if 'inventory' in DEPLOYMENT_VARS:
+            environ['INVENTORY'] = DEPLOYMENT_VARS['inventory']
         # extra_vars = { 'workflow_vars': WORKFLOW_VARS, 'deployment': { 'user': {}, 'id': DEPLOYMENT_ID }}
         # if DEPLOYMENT_VARS:
         #     extra_vars['deployment']['user'] = DEPLOYMENT_VARS['user']
