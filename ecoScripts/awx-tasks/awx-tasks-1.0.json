@@ -96,26 +96,6 @@
             ]
         },
         {
-            "name": "workflow_vars",
-            "label": "Workflow Variables",
-            "order": 1,
-            "controls": [
-            ],
-            "items": [
-                {
-                    "name": "workflow_var_list",
-                    "label": "Workflow Var List (YAML)",
-                    "type": "editor",
-                    "sub_type": "yaml",
-                    "environment_variable_name": "AWX_WORKFLOW_VARS",
-                    "required": false,
-                    "placeholder": "",
-                    "order": 1,
-                    "verify": false
-                }
-            ]
-        },
-        {
             "name": "deployment_vars",
             "label": "Deployment Variables",
             "order": 1,
