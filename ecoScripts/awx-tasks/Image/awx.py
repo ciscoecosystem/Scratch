@@ -166,7 +166,7 @@ class AWX(object):
                 template['inventory'] = resp['inventory']['id']
             jobs = []
             for i in range(template['count']):
-                extra_vars['workflow_vars']['loop_index'] = i
+                extra_vars['deployment_vars']['controls']['loop_index'] = i
                 resp = self.launch_template(
                     id=template['template_id'],
                     extra_vars=self.render(extra_vars) if template['pass_extra_vars'] else None,

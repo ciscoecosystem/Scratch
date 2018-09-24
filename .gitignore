@@ -3,4 +3,4 @@
 .DS_Store
 testing.py
 test_env/
-variable_dump.yml
+variable_dump.txt

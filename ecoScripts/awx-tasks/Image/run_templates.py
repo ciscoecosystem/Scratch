@@ -8,7 +8,7 @@ import json
 # ----------------------------------------------------------------------------
 pigeon = Pigeon()
 TEMPLATE_TASK_LIST = json.loads(getenv('TEMPLATE_TASK_LIST'))
-WORKFLOW_VARS = json.loads(getenv('AWX_WORKFLOW_VARS'))
+# WORKFLOW_VARS = json.loads(getenv('AWX_WORKFLOW_VARS'))
 DEPLOYMENT_VARS = json.loads(getenv('DEPLOYMENT_VARS')) if getenv('DEPLOYMENT_VARS') else None
 DEPLOYMENT_ID = getenv('JOB_ID')
 
@@ -23,11 +23,12 @@ def main():
             endpoint=getenv('AWX_ENDPOINT'),
             token=getenv('AWX_TOKEN')
         )
+        if 'controls' not in DEPLOYMENT_VARS:
+            DEPLOYMENT_VARS['controls'] = {}
+        DEPLOYMENT_VARS['deployment']['id'] = DEPLOYMENT_ID
         extra_vars = {
-            'workflow_vars': WORKFLOW_VARS,
-            'deployment': DEPLOYMENT_VARS
+            'deployment_vars': DEPLOYMENT_VARS
         }
-        extra_vars['deployment']['id'] = DEPLOYMENT_ID
         # extra_vars = { 'workflow_vars': WORKFLOW_VARS, 'deployment': { 'user': {}, 'id': DEPLOYMENT_ID }}
         # if DEPLOYMENT_VARS:
         #     extra_vars['deployment']['user'] = DEPLOYMENT_VARS['user']
