@@ -165,7 +165,7 @@ class AWX(object):
                     return {'status': 'error', 'message': 'Unable to find inventory for: {}'.format(template['inventory'])}
                 template['inventory'] = resp['inventory']['id']
             jobs = []
-            for i in range(template['count']):
+            for i in range(int(template['count'])):
                 extra_vars['workflow_vars']['loop_index'] = i
                 resp = self.launch_template(
                     id=template['template_id'],
