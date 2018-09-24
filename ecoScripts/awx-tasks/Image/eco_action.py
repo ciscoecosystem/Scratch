@@ -17,6 +17,7 @@ if os.getenv('ACTION'):
     options = {
         'TEST_CONNECTIVITY': lambda : subprocess.call(["python", "test_connectivity.py"]),
         'RUN_INTEGRATION': lambda : subprocess.call(["python", "run_templates.py"]),
+        'CREATE_DEPLOYMENT': lambda : subprocess.call(["python", "run_templates.py"]),
         'VALIDATE': lambda : subprocess.call(["python", "validate.py"]),
         'FETCH_ITEMS': lambda : subprocess.call(["python", "fetch_items.py"]),
         'DELETE_DEPLOYMENT': lambda : subprocess.call(["python", "delete_deployment.py"])
