@@ -22,6 +22,7 @@ if os.getenv('ACTION'):
     options = {
         'TEST_CONNECTIVITY': lambda : subprocess.call(["python", "test_connectivity.py"]),
         'RUN_INTEGRATION': lambda : subprocess.call(["python", "annotate-hosts.py"]),
+        'VALIDATE': lambda : subprocess.call(["python", "test_connectivity.py"]),
         'CREATE_FILTERS': lambda : subprocess.call(["python", "create-inventory-filters.py"]),
         'FETCH_ITEMS': lambda: subprocess.call(["python", "fetch-items.py"]),
         'CLEAR_CACHE': lambda: subprocess.call(["python", "clear-cache.py"])

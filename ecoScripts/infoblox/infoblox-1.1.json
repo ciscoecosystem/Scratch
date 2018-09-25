@@ -3,7 +3,7 @@
     "type": "api",
     "configurable": true,
     "schedulable": true,
-    "docker_image": "ecohub/infoblox:v1.1",
+    "docker_image": "ecohub/infoblox:v1.2",
     "config_parameters": [
         {
             "name": "connection_parameters",
