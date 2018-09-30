@@ -10,7 +10,7 @@ import time
 import re
 from pigeon import Pigeon
 
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 # Globals
 DEPLOYMENT_SETTINGS_SCHEMA = 'deployment_settings_schema.json'
@@ -90,6 +90,12 @@ class AWX(object):
                 return_items.append({'label': result['name'],'value': result['name']})
             return {'status': 'success', 'message': 'Successfully returning fetched inventories', 'data': return_items}
         return {'status': 'error', 'message': 'An error occurred while trying to retrieve inventories'}
+
+    def get_inventory_hosts(self, inventory_id):
+        resp = self.session.get(self.uri + 'inventories/{}/hosts/'.format(inventory_id))
+        if resp.status_code == 200:
+            return {'status':'success', 'hosts': resp.json()}
+        return {'status': 'unknown', 'message': 'Unable to find inventory vars for {}'.format(inventory_id)}
 
     def launch_template(self,id,extra_vars=None, credentials=None, inventory=None):
         req_payload={}
@@ -207,7 +213,7 @@ class AWX(object):
             run_time = int(time.time() - start)
         return {'status': 'error', 'message': 'A timeout occurred while waiting for jobs'}
 
-    def get_deployment_details(self, deployment_id):
+    def get_deployment_vars(self, deployment_id):
         inventory = {}
         resp = self.get_inventory(deployment_id)
         if resp['status'] == 'unknown':
@@ -218,7 +224,34 @@ class AWX(object):
             return resp
         inventory['vars'] = resp['vars']
         inventory['vars']['deployment_id'] = deployment_id
-        return {'status':'success', 'message':'Retrieved deployment details from AWX', 'inventory':inventory}
+        return {'status':'success', 'message':'Retrieved inventory vars from AWX', 'inventory':inventory}
+
+    def get_deployment_details(self, deployment_id):
+        deployment = {
+            id: deployment_id
+        }
+        resp = self.get_inventory(deployment_id)
+        if resp['status'] == 'unknown':
+            return {'status': 'error', 'message': 'Unable to find inventory for: {}'.format(deployment_id)}
+        inventory_id = resp['inventory']['id']
+        resp = self.get_inventory_vars(inventory_id)
+        if resp['status'] != 'success':
+            return resp
+        deployment['vars'] = resp['vars']
+        resp = self.get_inventory_hosts(inventory_id)
+        if resp['status'] != 'success':
+            return resp
+        deployment['groups'] = {}
+        for host in resp['results']:
+            host_info = {
+                'name': host['name'],
+                'ip': json.loads(host['variables'])['ip']
+            }
+            for group in host['summary_fields']['groups']['results']:
+                if group not in deployment['groups']:
+                    deployment['groups'][group] = []
+                deployment['groups'][group].append(host_info)
+        return {'status':'success', 'message':'Retrieved deployment details from AWX', 'data':deployment}
 
     def delete_deployment(self, inventory):
         resp = self.get_template(DELETE_DEPLOYMENT_TEMPLATE)

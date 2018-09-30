@@ -16,7 +16,8 @@ if os.getenv('ACTION'):
     pigeon.sendInfoMessage('Starting action ' + os.environ['ACTION'])
     options = {
         'TEST_CONNECTIVITY': lambda : subprocess.call(["python", "test_connectivity.py"]),
-        'DELETE_DEPLOYMENT': lambda : subprocess.call(["python", "delete_deployment.py"])
+        'DELETE_DEPLOYMENT': lambda : subprocess.call(["python", "delete_deployment.py"]),
+        'GET_DEPLOYMENT_DETAILS': lambda : subprocess.call(["python", "get_deployment_details.py"])
     }
     result = options[os.environ['ACTION']]()
 else:
