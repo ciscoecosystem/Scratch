@@ -228,7 +228,7 @@ class AWX(object):
 
     def get_deployment_details(self, deployment_id):
         deployment = {
-            id: deployment_id
+            'id': deployment_id
         }
         resp = self.get_inventory(deployment_id)
         if resp['status'] == 'unknown':
@@ -242,15 +242,15 @@ class AWX(object):
         if resp['status'] != 'success':
             return resp
         deployment['groups'] = {}
-        for host in resp['results']:
+        for host in resp['hosts']['results']:
             host_info = {
                 'name': host['name'],
-                'ip': json.loads(host['variables'])['ip']
+                'ip': json.loads(host['variables'].replace("'",'"') )['ip']
             }
             for group in host['summary_fields']['groups']['results']:
-                if group not in deployment['groups']:
-                    deployment['groups'][group] = []
-                deployment['groups'][group].append(host_info)
+                if group['name'] not in deployment['groups'].keys():
+                    deployment['groups'][group['name']] = []
+                deployment['groups'][group['name']].append(host_info)
         return {'status':'success', 'message':'Retrieved deployment details from AWX', 'data':deployment}
 
     def delete_deployment(self, inventory):
