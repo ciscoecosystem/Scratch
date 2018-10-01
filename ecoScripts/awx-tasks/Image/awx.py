@@ -187,6 +187,8 @@ class AWX(object):
     def wait_on_jobs(self, jobs, timeout=1200):
         run_time = 0
         start = time.time()
+        failed_flag = False
+        failed_jobs = []
         while True and run_time < timeout:
             # print '\n------------------------------------------------------------------\nElapsed Time:{}s\n'.format(int(time.time() - start))
             resp = self.session.get(self.uri + 'jobs/?id__in=' + ','.join(str(x) for x in jobs))
@@ -196,10 +198,13 @@ class AWX(object):
                     self.pigeon.sendInfoMessage('Status for job: {} is {}'.format(job['id'],job['status']))
                     # print 'Status for job: {} is {}'.format(job['id'],job['status'])
                     if job['failed']:
-                        return {'status': 'error', 'message': 'Job {} failed to complete'.format(job['id'])}
+                        failed_flag = True
+                        failed_jobs.append(job['id'])
                     elif job['status'] != 'successful':
                         pending = True
                 if not pending:
+                    if failed_flag:
+                        return {'status': 'error', 'message': 'Job(s) {} failed to complete'.format(",".join(failed_jobs))}
                     return {'status': 'success'}
             else:
                 return {'status': 'error', 'message': 'An error occurred whle getting logs'}
