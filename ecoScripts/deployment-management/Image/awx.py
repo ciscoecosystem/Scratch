@@ -243,10 +243,7 @@ class AWX(object):
             return resp
         deployment['groups'] = {}
         for host in resp['hosts']['results']:
-            host_info = {
-                'name': host['name'],
-                'ip': json.loads(host['variables'].replace("'",'"') )['ip']
-            }
+            host_info = json.loads(host['variables'].replace("'",'"') )
             for group in host['summary_fields']['groups']['results']:
                 if group['name'] not in deployment['groups'].keys():
                     deployment['groups'][group['name']] = []
