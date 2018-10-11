@@ -31,7 +31,14 @@ class AWX(object):
         )
         def get_env(value, key):
             return os.getenv(key, value)
+        def get_deployment(value, key):
+            deployment_vars = json.loads(os.getenv('DEPLOYMENT_VARS')) if os.getenv('DEPLOYMENT_VARS') else None
+            if deployment_vars and 'deployment' in deployment_vars:
+                if key in deployment_vars['deployment']:
+                    return deployment_vars['deployment'][key]
+            return value
         self.jinja.filters['get_env'] = get_env
+        self.jinja.filters['get_deployment'] = get_deployment
         self.pigeon = Pigeon()
 
     def test_connectivity(self):
@@ -109,9 +116,15 @@ class AWX(object):
             if env_variable.upper() in os.environ:
                 env_variable = '{' + "{{ 'default' | get_env('{env_var}') }}".format(env_var=env_variable.upper()) + '}'
             message = re.sub(match, env_variable, message)
+        matches = re.findall(r'_DEP_\w+', message)
+        for match in matches:
+            env_variable = '_'.join(match.split('_')[2:])
+            if env_variable.upper() in os.environ:
+                env_variable = '{' + "{{ 'default' | get_deployment('{env_var}') }}".format(env_var=env_variable) + '}'
+            message = re.sub(match, env_variable, message)
         return json.loads(self.jinja.from_string(message).render())
 
-    def validate_deployment_settings(self, deployment_settings):
+    def validate_deployment_settings(self, deployment_settings, check_mode=False):
         # Validate deployment_settings against schema
         validated_settings = []
         # try:
@@ -140,11 +153,12 @@ class AWX(object):
             if 'TEMPLATE_CREDENTIALS' in setting:
                 if not template['ask_credential_on_launch']:
                     return {'status': 'error', 'message': 'Credentials are not allowed to be passed for template: {}'.format(setting['TEMPLATE_NAME'])}
-                for credential in json.loads(setting['TEMPLATE_CREDENTIALS']):
-                    resp = self.get_credential(credential)
-                    if resp['status'] == 'unknown':
-                        return {'status': 'error', 'message': 'Unknown credential name: {}'.format(credential)}
-                    current_setting['credentials'].append(resp['credential']['id'])
+                if not check_mode:
+                    for credential in json.loads(setting['TEMPLATE_CREDENTIALS']):
+                        resp = self.get_credential(credential)
+                        if resp['status'] == 'unknown':
+                            return {'status': 'error', 'message': 'Unknown credential name: {}'.format(credential)}
+                        current_setting['credentials'].append(resp['credential']['id'])
             else:
                 del current_setting['credentials']
             if 'TEMPLATE_INVENTORY' in setting and setting['TEMPLATE_INVENTORY']:

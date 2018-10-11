@@ -24,7 +24,9 @@ def main():
         if not keep_going: return
         pigeon.sendInfoMessage('Validating task list against AWX: {endpoint}'.format(endpoint=getenv('AWX_ENDPOINT')))
         
-        validate_result = awx.validate_deployment_settings(TEMPLATE_TASK_LIST)
+        validate_result = awx.validate_deployment_settings(
+            deployment_settings=TEMPLATE_TASK_LIST,
+            check_mode=True)
         pigeon.sendUpdate(validate_result, last=True)
         return
     except Exception as e:
