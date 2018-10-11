@@ -266,7 +266,7 @@ class AWX(object):
             del inventory['vars']['ansible_ssh_common_args']
         resp = self.launch_template(
             id=template,
-            extra_vars={'workflow_vars': inventory['vars'], 'id': deployment_id},
+            extra_vars={'workflow_vars': inventory['vars'], 'inventory_id': deployment_id},
             credentials=credentials if credentials else None,
             inventory=inventory['id']
         )
