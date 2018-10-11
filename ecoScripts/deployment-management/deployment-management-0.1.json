@@ -3,7 +3,7 @@
     "type": "api",
     "configurable": true,
     "schedulable": true,
-    "docker_image": "ecohub/deployment-management:v0.6",
+    "docker_image": "ecohub/deployment-management:v0.7",
     "config_parameters": [
         {
             "name": "deployment_vars",
