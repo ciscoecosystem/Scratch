@@ -24,7 +24,7 @@ def main():
         resp = awx.get_deployment_vars(DEPLOYMENT_VARS['id'])
         keep_going = pigeon.sendUpdate(resp)
         if not keep_going: return
-        resp = awx.delete_deployment(resp['inventory'])
+        resp = awx.delete_deployment(resp['inventory'], DEPLOYMENT_VARS['id'])
         pigeon.sendUpdate(resp, last=True)
         return
     except Exception as e:

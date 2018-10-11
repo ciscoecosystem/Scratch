@@ -250,7 +250,7 @@ class AWX(object):
                 deployment['groups'][group['name']].append(host_info)
         return {'status':'success', 'message':'Retrieved deployment details from AWX', 'data':deployment}
 
-    def delete_deployment(self, inventory):
+    def delete_deployment(self, inventory, deployment_id):
         resp = self.get_template(DELETE_DEPLOYMENT_TEMPLATE)
         if resp['status'] == 'unknown':
             return {'status': 'error', 'message': 'Unknown template name: {}'.format(DELETE_DEPLOYMENT_TEMPLATE)}
@@ -266,7 +266,7 @@ class AWX(object):
             del inventory['vars']['ansible_ssh_common_args']
         resp = self.launch_template(
             id=template,
-            extra_vars={'workflow_vars': inventory['vars']},
+            extra_vars={'workflow_vars': inventory['vars'], 'id': deployment_id},
             credentials=credentials if credentials else None,
             inventory=inventory['id']
         )
