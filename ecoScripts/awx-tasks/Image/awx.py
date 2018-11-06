@@ -197,7 +197,7 @@ class AWX(object):
                     return resp
         return {'status': 'success', 'message': 'Successfully completed all AWX tasks'}
     
-    def wait_on_jobs(self, jobs, timeout=1200):
+    def wait_on_jobs(self, jobs, timeout=6000):
         run_time = 0
         start = time.time()
         failed_flag = False
