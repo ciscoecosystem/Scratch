@@ -1,0 +1,120 @@
+{
+    "version": "1.1",
+    "type": "api",
+    "configurable": true,
+    "schedulable": true,
+    "docker_image": "ecohub/awx_tasks:v0.18",
+    "config_parameters": [
+        {
+            "name": "workflow_tasks",
+            "label": "Workflow Tasks",
+            "order": 1,
+            "controls": [
+                {
+                    "label": "Test AWX Connectivity",
+                    "action": "test_connectivity",
+                    "message": "Testing Connectivity to AWX using target account",
+                    "type": "icon",
+                    "icon": {
+                        "group": "action",
+                        "name": "assessment"
+                    }
+                }
+            ],
+            "items": [
+                {
+                    "name": "template_task_list",
+                    "label": "Task-",
+                    "type": "expansion-panel",
+                    "sub_type": "",
+                    "dynamic_add": true,
+                    "environment_variable_name": "TEMPLATE_TASK_LIST",
+                    "value": "",
+                    "required": true,
+                    "placeholder": "",
+                    "order": 1,
+                    "verify": false,
+                    "children": [
+                        {
+                            "name": "template_name",
+                            "label": "AWX Job Template Name",
+                            "type": "fetch-single",
+                            "fetch_target": "TEMPLATES",
+                            "sub_type": "",
+                            "environment_variable_name": "TEMPLATE_NAME",
+                            "value": "",
+                            "required": true,
+                            "placeholder": "Select Job Template",
+                            "order": 1,
+                            "group": 1,
+                            "verify": false
+                        },
+                        {
+                            "name": "run_count",
+                            "label": "Template Run Count",
+                            "type": "select",
+                            "sub_type": "single-range-1-10",
+                            "environment_variable_name": "WORKFLOW_COUNT",
+                            "value": "",
+                            "required": true,
+                            "placeholder": "Run Count",
+                            "order": 2,
+                            "group": 1,
+                            "verify": false
+                        },
+                        {
+                            "name": "credential_list",
+                            "label": "Credentials",
+                            "type": "fetch-list",
+                            "sub_type": "allow-custom",
+                            "fetch_target": "CREDENTIALS",
+                            "environment_variable_name": "TEMPLATE_CREDENTIALS",
+                            "value": "",
+                            "required": true,
+                            "placeholder": "Credentials",
+                            "popover": "Select credentials for template",
+                            "order": 3,
+                            "group": 1,
+                            "verify": false
+                        },
+                        {
+                            "name": "inventory",
+                            "label": "Inventory",
+                            "type": "fetch-single",
+                            "sub_type": "allow-custom",
+                            "fetch_target": "INVENTORIES",
+                            "environment_variable_name": "TEMPLATE_INVENTORY",
+                            "value": "",
+                            "required": false,
+                            "placeholder": "Inventory name or _ENV_<environment var name>",
+                            "popover": "Inventory name for template",
+                            "order": 4,
+                            "group": 1,
+                            "verify": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "deployment_vars",
+            "label": "Deployment Variables",
+            "order": 1,
+            "controls": [
+            ],
+            "items": [
+                {
+                    "name": "deployment_var_list",
+                    "label": "Deployment Var List (YAML)",
+                    "type": "editor",
+                    "sub_type": "yaml",
+                    "environment_variable_name": "DEPLOYMENT_VARS",
+                    "required": false,
+                    "placeholder": "",
+                    "order": 1,
+                    "verify": false
+                }
+            ]
+        }
+    ]
+}
