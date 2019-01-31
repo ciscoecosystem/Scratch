@@ -40,7 +40,7 @@
                             "label": "AWX Job Template Name",
                             "type": "fetch-single",
                             "fetch_target": "TEMPLATES",
-                            "sub_type": "",
+                            "sub_type": "disruptive",
                             "environment_variable_name": "TEMPLATE_NAME",
                             "value": "",
                             "required": true,
