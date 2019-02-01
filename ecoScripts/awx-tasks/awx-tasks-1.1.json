@@ -38,7 +38,7 @@
                         {
                             "name": "template_name",
                             "label": "AWX Job Template Name",
-                            "type": "fetch-single",
+                            "type": "fetch-list",
                             "fetch_target": "TEMPLATES",
                             "sub_type": "",
                             "environment_variable_name": "TEMPLATE_NAME",
