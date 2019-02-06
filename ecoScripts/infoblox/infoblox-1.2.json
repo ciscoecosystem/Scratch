@@ -1,0 +1,251 @@
+{
+    "version": "1.2",
+    "type": "api",
+    "configurable": true,
+    "schedulable": true,
+    "docker_image": "ecohub/infoblox:v1.2",
+    "config_parameters": [
+        {
+            "name": "connection_parameters",
+            "label": "Connection Parameters",
+            "order": 1,
+            "controls": [
+                {
+                    "label": "Test Connectivity",
+                    "action": "test_connectivity",
+                    "message": "Testing Connectivity",
+                    "type": "icon",
+                    "icon": {
+                        "group": "action",
+                        "name": "assessment"
+                    }
+                }
+            ],
+            "items": [
+                {
+                    "name": "infoblox",
+                    "label": "Infoblox",
+                    "type": "text",
+                    "environment_variable_name": "INFOBLOX_HOST",
+                    "required": true,
+                    "placeholder": "Infoblox Hostname or IP",
+                    "order": 1,
+                    "verify": false
+                },
+                {
+                    "name": "ib_username",
+                    "label": "Infoblox Username",
+                    "type": "text",
+                    "environment_variable_name": "INFOBLOX_USER",
+                    "required": false,
+                    "placeholder": "Infoblox Username (read-only)",
+                    "order": 2,
+                    "verify": false
+                },
+                {
+                    "name": "ib_password",
+                    "label": "Infoblox Password",
+                    "type": "password",
+                    "environment_variable_name": "INFOBLOX_PWD",
+                    "required": true,
+                    "placeholder": "Infoblox Password",
+                    "order": 3,
+                    "verify": false
+                }
+            ]
+        },
+        {
+            "name": "annotation_options",
+            "label": "Annotation Options",
+            "order": 2,
+            "items": [
+                {
+                    "name": "tenant_scope_name",
+                    "label": "Tenant Scope Name",
+                    "type": "fetch-object",
+                    "fetch_target": "TENANT_SCOPE_NAMES",
+                    "environment_variable_name": "ANNOTATION_TENANT_SCOPE_NAME",
+                    "value": [{"label": "Default", "value": "Default"}],
+                    "placeholder": "Tenant Scope Name",
+                    "popover": "Select a Tenant Scope Name",
+                    "required": true,
+                    "order": 3,
+                    "verify": true
+                },
+                {
+                    "name": "hostname",
+                    "label": "Hostname",
+                    "type": "switch",
+                    "environment_variable_name": "ENABLE_HOSTNAME",
+                    "value": false,
+                    "popover": "Annotate hostnames",
+                    "order": 1,
+                    "verify": false,
+                    "children": [
+                        {
+                            "name": "hostname_annotation_name",
+                            "label": "Tetration Annotation Name",
+                            "type": "text",
+                            "environment_variable_name": "HOSTNAME_ANNOTATION_NAME",
+                            "value" : "Infoblox Hostname",
+                            "placeholder": "Tetration Annotation Name",
+                            "order": 1,
+                            "verify": false
+                        }
+                    ]
+                },
+                {
+                    "name": "zone",
+                    "label": "DNS Zone",
+                    "type": "switch",
+                    "environment_variable_name": "ENABLE_ZONE",
+                    "value": false,
+                    "popover": "Annotate dns zone",
+                    "order": 2,
+                    "verify": false,
+                    "children": [
+                        {
+                            "name": "zone_annotation_name",
+                            "label": "Tetration Annotation Name",
+                            "type": "text",
+                            "environment_variable_name": "ZONE_ANNOTATION_NAME",
+                            "value": "Infoblox Zone",
+                            "placeholder": "Tetration Annotation Name",
+                            "order": 1,
+                            "verify": false
+                        }
+                    ]
+                },
+                {
+                    "name": "subnet",
+                    "label": "Network Subnet",
+                    "type": "switch",
+                    "environment_variable_name": "ENABLE_SUBNET",
+                    "value": false,
+                    "popover": "Annotate parent subnet of endpoint",
+                    "order": 3,
+                    "verify": false,
+                    "children": [
+                        {
+                            "name": "subnet_annotation_name",
+                            "label": "Tetration Annotation Name",
+                            "type": "text",
+                            "environment_variable_name": "SUBNET_ANNOTATION_NAME",
+                            "value": "Infoblox Subnet",
+                            "placeholder": "Tetration Annotation Name",
+                            "order": 1,
+                            "verify": false
+                        }
+                    ]
+                },
+                {
+                    "name": "network_view",
+                    "label": "Network View",
+                    "type": "switch",
+                    "environment_variable_name": "ENABLE_NETWORK_VIEW",
+                    "value": false,
+                    "popover": "Annotate network view",
+                    "order": 2,
+                    "verify": false,
+                    "children": [
+                        {
+                            "name": "network_view_annotation_name",
+                            "label": "Tetration Annotation Name",
+                            "type": "text",
+                            "environment_variable_name": "NETWORK_VIEW_ANNOTATION_NAME",
+                            "value": "Infoblox View",
+                            "placeholder": "Tetration Annotation Name",
+                            "order": 1,
+                            "verify": false
+                        }
+                    ]
+                },
+                {
+                    "name": "extensible attributes",
+                    "label": "Extensible Attributes",
+                    "type": "switch",
+                    "environment_variable_name": "ENABLE_EA",
+                    "value": false,
+                    "popover": "Annotate Extensible Attributes",
+                    "order": 4,
+                    "verify": true,
+                    "children": [
+                        {
+                            "name": "ea_annotation_name",
+                            "label": "Tetration Annotation Name",
+                            "type": "text",
+                            "environment_variable_name": "EA_ANNOTATION_NAME",
+                            "value": "Infoblox EAs",
+                            "placeholder": "Tetration Annotation Name",
+                            "order": 1,
+                            "verify": false
+                        },
+                        {
+                            "name": "ea_list",
+                            "label": "Extensible Attributes",
+                            "type": "fetch-objects",
+                            "fetch_target": "EXT_ATTRS",
+                            "environment_variable_name": "EA_LIST",
+                            "value": "",
+                            "placeholder": "Extensible Attributes",
+                            "popover": "Select EAs for annotation",
+                            "order": 1,
+                            "verify": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "inventory_filters",
+            "label": "Inventory Filters",
+            "order": 3,
+            "controls": [
+                {
+                    "label": "Clear Cache",
+                    "action": "clear_cache",
+                    "message": "Clearing inventory filter cache for known subnets",
+                    "type": "icon",
+                    "icon": {
+                        "group": "action",
+                        "name": "settings_backup_restore"
+                    }
+                },
+                {
+                    "label": "Update Filters",
+                    "action": "create_filters",
+                    "message": "Update Filters",
+                    "type": "icon",
+                    "icon": {
+                        "group": "action",
+                        "name": "update"
+                    }
+                }
+            ],
+            "items": [
+                {
+                    "name": "scope_restricted",
+                    "label": "Scope Restricted",
+                    "type": "switch",
+                    "environment_variable_name": "SCOPE_RESTRICTED",
+                    "value": false,
+                    "popover": "Restrict to ownership scope",
+                    "order": 2,
+                    "verify": true
+                },
+                {
+                    "name": "ownership_scope",
+                    "label": "Ownership Scope",
+                    "type": "fetch-object",
+                    "fetch_target": "APP_SCOPE_IDS",
+                    "environment_variable_name": "FILTERS_APP_SCOPE_ID",
+                    "value": "",
+                    "placeholder": "App Scope ID",
+                    "popover": "Select an App Scope",
+                    "order": 3,
+                    "verify": true
+                }
+            ]
+        }
+    ]
+}

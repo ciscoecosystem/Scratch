@@ -15,9 +15,9 @@
         "name": "infoblox",
         "label": "Infoblox Annotations",
         "versions": [
-            "0.1", "1.1"
+            "0.1", "1.1", "1.2"
         ],
-        "latest": "1.1",
+        "latest": "1.2",
         "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/infoblox",
         "icon": "icon.png",
         "tags": "ipam",
