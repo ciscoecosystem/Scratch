@@ -99,54 +99,6 @@
                     ]
                 }
             ]
-        },
-        {
-            "name": "deployment_vars",
-            "label": "Deployment Variables",
-            "order": 1,
-            "width": 1,
-            "controls": [
-            ],
-            "items": [
-                {
-                    "name": "deployment_var_list",
-                    "label": "Deployment Var List (YAML)",
-                    "type": "editor",
-                    "sub_type": "yaml",
-                    "dynamic_add": false,
-                    "environment_variable_name": "DEPLOYMENT_VARS",
-                    "required": false,
-                    "placeholder": "",
-                    "popover": "",
-                    "order": 1,
-                    "verify": false,
-                    "children": []
-                }
-            ]
-        },
-        {
-            "name": "deployment_vars",
-            "label": "Deployment Variables",
-            "order": 1,
-            "width": 1,
-            "controls": [
-            ],
-            "items": [
-                {
-                    "name": "deployment_var_list",
-                    "label": "Deployment Var List (YAML)",
-                    "type": "editor",
-                    "sub_type": "yaml",
-                    "dynamic_add": false,
-                    "environment_variable_name": "DEPLOYMENT_VARS",
-                    "required": false,
-                    "placeholder": "",
-                    "popover": "",
-                    "order": 1,
-                    "verify": false,
-                    "children": []
-                }
-            ]
         }
     ]
 }
