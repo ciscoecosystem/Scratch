@@ -9,7 +9,7 @@
             "name": "workflow_tasks",
             "label": "Workflow Tasks",
             "order": 1,
-            "width": 2,
+            "width": 1,
             "controls": [
                 {
                     "label": "Test AWX Connectivity",
@@ -40,7 +40,7 @@
                         {
                             "name": "template_name",
                             "label": "AWX Job Template Name",
-                            "type": "fetch-list",
+                            "type": "fetch-single",
                             "fetch_target": "TEMPLATES",
                             "sub_type": "",
                             "environment_variable_name": "TEMPLATE_NAME",
