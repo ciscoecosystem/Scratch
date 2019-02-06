@@ -3,21 +3,21 @@
     "type": "api",
     "configurable": true,
     "schedulable": true,
-    "docker_image": "ecohub/awx_tasks:v0.18",
+    "docker_image": "ecohub/awx_tasks:v0.19",
     "config_parameters": [
         {
             "name": "workflow_tasks",
             "label": "Workflow Tasks",
             "order": 1,
-            "width": 1,
+            "width": 2,
             "controls": [
                 {
                     "label": "Test AWX Connectivity",
                     "action": "test_connectivity",
                     "message": "Testing Connectivity to AWX using target account",
-                    "type": "icon",
+                    "type": "icon2",
                     "icon": {
-                        "group": "action",
+                        "group": "action2",
                         "name": "assessment"
                     }
                 }
@@ -33,7 +33,7 @@
                     "value": "",
                     "required": true,
                     "placeholder": "",
-                    "order": 1,
+                    "order": 2,
                     "verify": false,
                     "popover": "",
                     "children": [
