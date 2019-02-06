@@ -33,7 +33,7 @@
                     "value": "",
                     "required": true,
                     "placeholder": "",
-                    "order": 2,
+                    "order": 1,
                     "verify": false,
                     "popover": "",
                     "children": [
