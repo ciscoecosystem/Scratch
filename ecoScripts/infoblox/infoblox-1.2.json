@@ -37,7 +37,7 @@
                     "label": "Infoblox Username",
                     "type": "text",
                     "environment_variable_name": "INFOBLOX_USER",
-                    "required": false,
+                    "required": true,
                     "placeholder": "Infoblox Username (read-only)",
                     "order": 2,
                     "verify": false
