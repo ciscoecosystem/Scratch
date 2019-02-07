@@ -74,7 +74,7 @@
                             "fetch_target": "CREDENTIALS",
                             "environment_variable_name": "TEMPLATE_CREDENTIALS",
                             "value": "",
-                            "required": true,
+                            "required": false,
                             "placeholder": "Credentials",
                             "popover": "Select credentials for template",
                             "order": 3,
