@@ -27,9 +27,9 @@
         "name": "awx-tasks",
         "label": "AWX Task Automator",
         "versions": [
-            "1.0", "1.1"
+            "1.0", "1.1", "1.2"
         ],
-        "latest": "1.1",
+        "latest": "1.2",
         "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/awx-tasks",
         "icon": "icon.png",
         "tags": "ansible",
@@ -39,9 +39,9 @@
         "name": "deployment-management",
         "label": "Deployment Management (wip)",
         "versions": [
-            "0.1"
+            "0.1", "0.2"
         ],
-        "latest": "0.1",
+        "latest": "0.2",
         "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/deployment-management",
         "icon": "icon.png",
         "tags": "ansible",
