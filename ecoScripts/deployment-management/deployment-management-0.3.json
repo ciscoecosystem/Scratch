@@ -1,9 +1,9 @@
 {
-    "version": "0.2",
+    "version": "0.3",
     "type": "api",
     "configurable": true,
     "schedulable": true,
-    "docker_image": "ecohub/deployment-management:v0.9",
+    "docker_image": "ecohub/deployment-management:v0.10",
     "config_parameters": [
         {
             "name": "deployment_vars",

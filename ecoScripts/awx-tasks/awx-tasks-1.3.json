@@ -1,9 +1,9 @@
 {
-    "version": "1.2",
+    "version": "1.3",
     "type": "api",
     "configurable": true,
     "schedulable": true,
-    "docker_image": "ecohub/awx_tasks:v0.19",
+    "docker_image": "ecohub/awx_tasks:v0.20",
     "config_parameters": [
         {
             "name": "workflow_tasks",

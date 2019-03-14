@@ -40,6 +40,7 @@ def main():
         settings = awx.validate_deployment_settings(awx.render(TEMPLATE_TASK_LIST))
         keep_going = pigeon.sendUpdate(settings)
         if not keep_going: return
+        pigeon.sendInfoMessage('Starting deployment tasks for id: {}'.format(DEPLOYMENT_ID))
         resp = awx.run_templates(settings['settings'], extra_vars)
         pigeon.sendUpdate(resp, last=True)
         return

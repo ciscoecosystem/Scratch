@@ -262,6 +262,7 @@ class AWX(object):
         return {'status':'success', 'message':'Retrieved deployment details from AWX', 'data':deployment}
 
     def delete_deployment(self, inventory, deployment_id):
+        self.pigeon.sendInfoMessage('Deleting deployment: {}'.format(inventory['name']))
         resp = self.get_template(DELETE_DEPLOYMENT_TEMPLATE)
         if resp['status'] == 'unknown':
             return {'status': 'error', 'message': 'Unknown template name: {}'.format(DELETE_DEPLOYMENT_TEMPLATE)}
@@ -310,4 +311,4 @@ class AWX(object):
         resp = self.wait_on_jobs(jobs)
         if resp['status'] != 'success':
             return resp
-        return {'status': 'success', 'message': 'Successfully deleted deployment {}'.format(inventory['id'])}
+        return {'status': 'success', 'message': 'Successfully deleted deployment {}'.format(inventory['name'])}
