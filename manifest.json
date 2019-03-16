@@ -39,9 +39,9 @@
         "name": "deployment-management",
         "label": "Deployment Management (wip)",
         "versions": [
-            "0.1", "0.2", "0.3", "0.4"
+            "0.1", "0.2", "0.3", "0.4", "0.5"
         ],
-        "latest": "0.4",
+        "latest": "0.5",
         "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/deployment-management",
         "icon": "icon.png",
         "tags": "ansible",

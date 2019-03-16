@@ -311,4 +311,4 @@ class AWX(object):
         resp = self.wait_on_jobs(jobs)
         if resp['status'] != 'success':
             return resp
-        return {'status': 'success', 'message': 'Successfully deleted deployment {}'.format(inventory['name'])}
+        return {'status': 'success', 'message': 'Successfully deleted deployment {}'.format(deployment_id)}
