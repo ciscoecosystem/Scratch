@@ -149,7 +149,7 @@ class AWX(object):
                 'count': setting['WORKFLOW_COUNT'],
                 'wait': setting['wait'] if 'wait' in setting else "yes"
             }
-            if 'TEMPLATE_CREDENTIALS' in setting:
+            if 'TEMPLATE_CREDENTIALS' in setting and len(json.loads(setting['TEMPLATE_CREDENTIALS'])) > 0:
                 if not template['ask_credential_on_launch']:
                     return {'status': 'error', 'message': 'Credentials are not allowed to be passed for template: {}'.format(setting['TEMPLATE_NAME'])}
                 if not check_mode:

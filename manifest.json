@@ -27,9 +27,9 @@
         "name": "awx-tasks",
         "label": "AWX Task Automator",
         "versions": [
-            "1.0", "1.1", "1.2", "1.3"
+            "1.0", "1.1", "1.2", "1.3", "1.4"
         ],
-        "latest": "1.3",
+        "latest": "1.4",
         "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/awx-tasks",
         "icon": "icon.png",
         "tags": "ansible",
