@@ -1,0 +1,29 @@
+{
+    "version": "0.6",
+    "type": "api",
+    "configurable": true,
+    "schedulable": true,
+    "docker_image": "ecohub/deployment-management:v0.13",
+    "config_parameters": [
+        {
+            "name": "deployment_vars",
+            "label": "Deployment Variables",
+            "order": 1,
+            "controls": [
+            ],
+            "items": [
+                {
+                    "name": "deployment_var_list",
+                    "label": "Deployment Var List (YAML)",
+                    "type": "editor",
+                    "sub_type": "yaml",
+                    "environment_variable_name": "DEPLOYMENT_VARS",
+                    "required": false,
+                    "placeholder": "",
+                    "order": 1,
+                    "verify": false
+                }
+            ]
+        }
+    ]
+}
