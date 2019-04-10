@@ -46,6 +46,12 @@ class AWX(object):
             return {'status':'exists', 'credential': resp.json()['results'][0]} if resp.json()['count'] == 1 else {'status': 'unknown'}
         return {'status': 'unknown'}
 
+    def get_template_credentials(self, template):
+        resp = self.session.get(self.uri + 'job_templates/{}/credentials/'.format(template))
+        if resp.status_code == 200:
+            return {'status': 'success', 'credentials':resp.json()['results']}
+        return {'status': 'error', 'message': 'An error occurred while fetching template credentials'}
+
     def fetch_credentials(self):
         resp = self.session.get(self.uri + 'credentials')
         if resp.status_code == 200:
@@ -268,6 +274,11 @@ class AWX(object):
             return {'status': 'error', 'message': 'Unknown template name: {}'.format(DELETE_DEPLOYMENT_TEMPLATE)}
         template = resp['template']['id']
         credentials = []
+        resp = self.get_template_credentials(template)
+        if resp['status'] == 'error':
+            return resp
+        for credential in resp['credentials']:
+            credentials.append(credential['id'])
         for credential in inventory['vars']['credentials']:
             resp = self.get_credential(credential)
             if resp['status'] == 'unknown':
