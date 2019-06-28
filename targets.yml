@@ -1,0 +1,47 @@
+# List of all supported target types
+docker_image: ecohub/discover_target:v1.2
+targets:
+  - type: aci
+    label: ACI
+    icon: aci.png
+    parameters:
+      - name: aci_hostname
+        label: APIC hostname or IP
+        type: text
+        required: true
+      - name: aci_username
+        label: Username
+        type: text
+        required: true
+      - name: aci_password
+        label: Password
+        type: secret
+        required: true
+  - type: tetration
+    label: Tetration
+    icon: tetration.png
+    parameters:
+      - name: tetration_hostname
+        label: Cluster hostname or IP
+        type: text
+        required: true
+      - name: tetration_api_key
+        label: API Key
+        type: text
+        required: true
+      - name: tetration_api_secret
+        label: API Secret
+        type: secret
+        required: true
+  - type: awx
+    label: AWX
+    icon: awx.png
+    parameters:
+      - name: awx_hostname
+        label: AWX hostname or IP
+        type: text
+        required: true
+      - name: awx_token
+        label: API Key
+        type: secret
+        required: true
