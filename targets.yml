@@ -7,14 +7,17 @@ targets:
     parameters:
       - name: aci_hostname
         label: APIC hostname or IP
+        icon: dns
         type: text
         required: true
       - name: aci_username
         label: Username
+        icon: person
         type: text
         required: true
       - name: aci_password
         label: Password
+        icon: lock
         type: secret
         required: true
   - type: tetration
@@ -23,14 +26,17 @@ targets:
     parameters:
       - name: tetration_hostname
         label: Cluster hostname or IP
+        icon: dns
         type: text
         required: true
       - name: tetration_api_key
         label: API Key
+        icon: vpn_key
         type: text
         required: true
       - name: tetration_api_secret
         label: API Secret
+        icon: lock
         type: secret
         required: true
   - type: awx
@@ -39,9 +45,11 @@ targets:
     parameters:
       - name: awx_hostname
         label: AWX hostname or IP
+        icon: dns
         type: text
         required: true
       - name: awx_token
         label: API Key
+        icon: lock
         type: secret
         required: true
