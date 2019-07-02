@@ -3,11 +3,13 @@ LABEL Project=ecoHub Name=Target_Connectivity Version=0.0.1
 WORKDIR /app
 ADD . /app
 
-# install pip and then install dependencies
-RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-RUN python get-pip.py
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+# install yum requirements
+RUN yum install -y centos-release-scl gcc
+RUN yum install -y rh-python36
 
-# run the app when the container launches
-# ENTRYPOINT [ "/bin/bash", "eco_action.sh" ]
-ENTRYPOINT [ "python", "eco_action.py" ]
+# create venv and install pip dependencies
+RUN /opt/rh/rh-python36/root/usr/bin/python -m venv runner
+RUN runner/bin/pip3 install -r requirements.txt
+
+# run the eco_action script using venv on launch
+ENTRYPOINT [ "runner/bin/python", "eco_action.py" ]

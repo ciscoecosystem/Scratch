@@ -5,38 +5,33 @@ be taken (which script to run).
 """
 
 import subprocess
-import os
-import json
+from os import getenv
+from pigeon import Pigeon
 
-def print_message(message):
-    '''
-    prints a JSON object with indentation if the DEBUG environment variable
-    is set and without indentation if it is not set
-    '''
-    print json.dumps(message)
+# Python Path
+PYTHON_PATH = 'runner/bin/python'
 
-# return a message that the container has started
-pigeon = {
-    "status_code": 100,
-    "data": {},
-    "message": "Container has started."
-}
-print_message(pigeon)
+# Define pigeon messenger
+pigeon = Pigeon()
+VALID_TARGET_TYPES = [
+    'ACI',
+    'TETRATION',
+    'AWX'
+    ]
 
-# flag determines if this script has to echo content back to the screen; in
-# most cases the script that is called will do that so it's not required
-flag = False
-
-if os.getenv('ACTION'):
-
-    if os.environ['ACTION'] == 'TEST_CONNECTIVITY':
-        subprocess.call(["python", "test_connectivity.py"])
+if getenv('TARGET_TYPE').upper() in VALID_TARGET_TYPES:
+    pigeon.sendInfoMessage('Starting subprocess for: %s' % getenv('TARGET_TYPE'))
+    options = {
+        'ACI': lambda : subprocess.call(["%s" % PYTHON_PATH, "aci.py"]),
+        'TETRATION': lambda : subprocess.call(["%s" % PYTHON_PATH, "tetration.py"]),
+        'AWX': lambda : subprocess.call(["%s" % PYTHON_PATH, "awx.py"]),
+    }
+    result = options[str(getenv('TARGET_TYPE')).upper()]()
 else:
-    pigeon['message'] = "The ACTION environment variable is not defined."
-    pigeon['status_code'] = 404
-    print_message(pigeon)
+    pigeon.sendUpdate({
+        'status': 'unknown',
+        'message': 'Target Type: ' + getenv('TARGET_TYPE') + 'not implemented'
+    })
 
 # print a message that the container has completed its work
-pigeon['message'] = "Container is stopping."
-pigeon['status_code'] = 100
-print_message(pigeon)
+pigeon.sendInfoMessage('Action complete')

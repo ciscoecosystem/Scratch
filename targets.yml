@@ -1,11 +1,11 @@
 # List of all supported target types
-docker_image: ecohub/discover_target:v1.2
+docker_image: ecohub/discover_target:v1.3
 targets:
   - type: aci
     label: ACI
     icon: aci.png
     parameters:
-      - name: aci_hostname
+      - name: apic_hostname
         label: APIC hostname or IP
         icon: dns
         type: text
