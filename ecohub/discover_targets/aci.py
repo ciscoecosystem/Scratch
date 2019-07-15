@@ -36,6 +36,7 @@ def test_connectivity():
         'cache-control': "no-cache",
     })
     session.verify = False
+    
     uri = 'https://%s' % getenv('APIC_HOSTNAME')
     payload = {
         "aaaUser":{
@@ -47,10 +48,10 @@ def test_connectivity():
     }
 
     try:
-        resp = session.post('%s/api/aaaLogin.json' % uri, data=json.dumps(payload))
+        resp = session.post('%s/api/aaaLogin.json' % uri, data=json.dumps(payload), timeout=10)
 
     # most likely a DNS issue
-    except exceptions.ConnectionError:
+    except exceptions.ConnectionError or exceptions.ConnectTimeout or exceptions.Timeout:
         pigeon.sendUpdate({
             'status': 'not-found',
             'message': "Error connecting to Tetration endpoint"
@@ -69,7 +70,8 @@ def test_connectivity():
         status = 204 if resp.status_code == 200 else resp.status_code
         return_msg = ''
         if resp.status_code >= 400:
-            return_msg = "Tetration " + str(resp.text).rstrip()
+            error = resp.json()['imdata'][0]['error']['attributes']
+            return_msg = '{code}: {text}'.format(code=error['code'], text=error['text'])
         pigeon.sendUpdate({
             'status': status,
             'message': return_msg
