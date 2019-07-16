@@ -54,7 +54,12 @@ def test_connectivity():
     except exceptions.ConnectionError or exceptions.ConnectTimeout or exceptions.Timeout:
         pigeon.sendUpdate({
             'status': 'not-found',
-            'message': "Error connecting to Tetration endpoint"
+            'message': "A connection error occurred while trying to reach the APIC"
+        })
+    except exceptions.ConnectTimeout or exceptions.Timeout:
+        pigeon.sendUpdate({
+            'status': 'not-found',
+            'message': "A timeout occurred while trying to reach the APIC"
         })
     except exceptions.InvalidURL:
         pigeon.sendUpdate({
@@ -64,7 +69,7 @@ def test_connectivity():
     except:
         pigeon.sendUpdate({
             'status': 'error',
-            'message': "Unknown error connecting to Tetration"
+            'message': "Unknown error connecting to APIC"
         })
     else:
         status = 204 if resp.status_code == 200 else resp.status_code

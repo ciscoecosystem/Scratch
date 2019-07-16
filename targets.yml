@@ -24,7 +24,7 @@ targets:
     label: Tetration
     icon: tetration.png
     parameters:
-      - name: tetration_hostname
+      - name: tetration_endpoint
         label: Cluster hostname or IP
         icon: dns
         type: text
