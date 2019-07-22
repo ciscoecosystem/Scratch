@@ -1,7 +1,7 @@
 # List of all supported target types
 docker_image: ecohub/discover_target:v1.3
 targets:
-  - type: aci
+  - type: aci_user
     label: ACI (user/password)
     icon: aci.png
     parameters:
@@ -20,7 +20,7 @@ targets:
         icon: lock
         type: secret
         required: true
-  - type: aci
+  - type: aci_cert
     label: ACI (certificate)
     icon: aci.png
     parameters:
