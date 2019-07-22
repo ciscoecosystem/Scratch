@@ -2,7 +2,7 @@
 docker_image: ecohub/discover_target:v1.3
 targets:
   - type: aci
-    label: ACI
+    label: ACI (user/password)
     icon: aci.png
     parameters:
       - name: apic_hostname
@@ -20,6 +20,21 @@ targets:
         icon: lock
         type: secret
         required: true
+  - type: aci
+    label: ACI (certificate)
+    icon: aci.png
+    parameters:
+      - name: apic_hostname
+        label: APIC hostname or IP
+        icon: dns
+        type: text
+        required: true
+      - name: aci_certificate
+        label: Username
+        icon: chrome_reader_mode
+        type: multitext
+        required: true
+
   - type: tetration
     label: Tetration
     icon: tetration.png
