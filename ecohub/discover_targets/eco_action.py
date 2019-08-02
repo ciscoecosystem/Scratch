@@ -1,5 +1,5 @@
 """
-The purpose of this script is to call other scripts. There are no arguments to 
+The purpose of this script is to call other scripts. There are no arguments to
 this script. An environment variable named ACTION defines which action should
 be taken (which script to run).
 """
@@ -14,7 +14,8 @@ PYTHON_PATH = 'runner/bin/python'
 # Define pigeon messenger
 pigeon = Pigeon()
 VALID_TARGET_TYPES = [
-    'ACI',
+    'ACI_USER',
+    'ACI_CERT'
     'TETRATION',
     'AWX'
     ]
