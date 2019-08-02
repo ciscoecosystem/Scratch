@@ -29,6 +29,7 @@ if getenv('TARGET_TYPE').upper() in VALID_TARGET_TYPES:
     }
     result = options[str(getenv('TARGET_TYPE')).upper()]()
 else:
+    pigeon.sendInfoMessage('ECO_ACTION FAILED')
     pigeon.sendUpdate({
         'status': 'unknown',
         'message': 'Target Type: ' + getenv('TARGET_TYPE') + 'not implemented'
