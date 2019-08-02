@@ -20,6 +20,14 @@ targets:
         icon: lock
         type: secret
         required: true
+      - name: kafka
+        label: IP
+        icon: dns
+        type: text
+      - name: kafka_topic
+        label: topic name
+        icon: person
+        type: text
   - type: aci_cert
     label: ACI (certificate)
     icon: aci.png
