@@ -1,7 +1,8 @@
 # List of all supported target types
 docker_image: ecohub/discover_target:v1.3
 targets:
-  - type: aci_user
+  - type: aci
+    connection_type: userpass
     label: ACI (user/password)
     icon: aci.png
     parameters:
@@ -20,7 +21,8 @@ targets:
         icon: lock
         type: secret
         required: true
-  - type: aci_cert
+  - type: aci
+    connection_type: certificate
     label: ACI (certificate)
     icon: aci.png
     parameters:
@@ -30,41 +32,46 @@ targets:
         type: text
         required: true
       - name: aci_certificate
-        label: Username
+        label: Certificate
         icon: chrome_reader_mode
         type: multitext
         required: true
-
-  - type: tetration
-    label: Tetration
-    icon: tetration.png
-    parameters:
-      - name: tetration_endpoint
-        label: Cluster hostname or IP
-        icon: dns
-        type: text
-        required: true
-      - name: tetration_api_key
-        label: API Key
+      - name: aci_private_key
+        label: Private Key
         icon: vpn_key
-        type: text
-        required: true
-      - name: tetration_api_secret
-        label: API Secret
-        icon: lock
         type: secret
         required: true
-  - type: awx
-    label: AWX
-    icon: awx.png
-    parameters:
-      - name: awx_hostname
-        label: AWX hostname or IP
-        icon: dns
-        type: text
-        required: true
-      - name: awx_token
-        label: API Key
-        icon: lock
-        type: secret
-        required: true
+
+  # - type: tetration
+  #   label: Tetration
+  #   icon: tetration.png
+  #   parameters:
+  #     - name: tetration_endpoint
+  #       label: Cluster hostname or IP
+  #       icon: dns
+  #       type: text
+  #       required: true
+  #     - name: tetration_api_key
+  #       label: API Key
+  #       icon: vpn_key
+  #       type: text
+  #       required: true
+  #     - name: tetration_api_secret
+  #       label: API Secret
+  #       icon: lock
+  #       type: secret
+  #       required: true
+  # - type: awx
+  #   label: AWX
+  #   icon: awx.png
+  #   parameters:
+  #     - name: awx_hostname
+  #       label: AWX hostname or IP
+  #       icon: dns
+  #       type: text
+  #       required: true
+  #     - name: awx_token
+  #       label: API Key
+  #       icon: lock
+  #       type: secret
+  #       required: true
