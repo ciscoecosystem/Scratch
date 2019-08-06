@@ -7,21 +7,47 @@ import json
 requests.packages.urllib3.disable_warnings()
 pigeon = Pigeon()
 
-REQUIRED_ENVS = [
+REQUIRED_ENVS_USERPASS = [
     'APIC_HOSTNAME',
     'ACI_USERNAME',
     'ACI_PASSWORD'
+]
+
+REQUIRED_ENVS_CERTIFICATE = [
+    'APIC_HOSTNAME',
+    'ACI_CERTIFICATE',
+    'ACI_PRIVATE_KEY'
+]
+
+CONNECTION_TYPES = [
+    'USERPASS',
+    'CERTIFICATE'
 ]
 
 VALID_ACTIONS = [
     'TEST_CONNECTIVITY'
 ]
 
+CERT_PATH = '/tmp/aci_client.crt'
+KEY_PATH = '/tmp/aci_key.key'
+
 def ensure_requirements():
     missing_vars = []
-    for requirement in REQUIRED_ENVS:
-        if not getenv(requirement):
-            missing_vars.append(requirement)
+    connection_type = getenv('CONNECTION_TYPE')
+    if not connection_type or connection_type.upper() not in CONNECTION_TYPES:
+        pigeon.sendUpdate({
+            'status': 'error',
+            'message': 'A proper connection type was not defined'
+        })
+        exit()
+    elif connection_type.upper() == 'USERPASS':
+        for requirement in REQUIRED_ENVS_USERPASS:
+            if not getenv(requirement):
+                missing_vars.append(requirement)
+    else:
+        for requirement in REQUIRED_ENVS_CERTIFICATE:
+            if not getenv(requirement):
+                missing_vars.append(requirement)
     if len(missing_vars) > 0:
         pigeon.sendUpdate({
             'status': 'error',
@@ -38,15 +64,22 @@ def test_connectivity():
     session.verify = False
     
     uri = 'https://%s' % getenv('APIC_HOSTNAME')
-    payload = {
-        "aaaUser":{
-            "attributes":{
-                "name": getenv('ACI_USERNAME'),
-                "pwd": getenv('ACI_PASSWORD')
+    
+    if getenv('CONNECTION_TYPE').upper() == 'USERPASS':
+        payload = {
+            "aaaUser":{
+                "attributes":{
+                    "name": getenv('ACI_USERNAME'),
+                    "pwd": getenv('ACI_PASSWORD')
+                }
             }
         }
-    }
-
+    else:
+        with open(CERT_PATH) as cert_file:
+            cert_file.write(getenv('ACI_CERTIFICATE'))
+        with open(KEY_PATH) as key_file:
+            key_file.write(getenv('ACI_PRIVATE_KEY'))
+        session.cert = (CERT_PATH, KEY_PATH)
     try:
         resp = session.post('%s/api/aaaLogin.json' % uri, data=json.dumps(payload), timeout=10)
 
