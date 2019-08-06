@@ -1,3 +1,4 @@
 requests
 tetpyclient
 jinja2
+kafka-python

@@ -3,6 +3,8 @@ from requests import Session, exceptions
 import requests.packages.urllib3
 from pigeon import Pigeon
 import json
+import kafka.errors
+from kafka import KafkaConsumer
 
 requests.packages.urllib3.disable_warnings()
 pigeon = Pigeon()
@@ -10,7 +12,9 @@ pigeon = Pigeon()
 REQUIRED_ENVS_USERPASS = [
     'APIC_HOSTNAME',
     'ACI_USERNAME',
-    'ACI_PASSWORD'
+    'ACI_PASSWORD',
+    'KAFKA_IP',
+    'KAFKA_TOPIC'
 ]
 
 REQUIRED_ENVS_CERTIFICATE = [
@@ -62,9 +66,9 @@ def test_connectivity():
         'cache-control': "no-cache",
     })
     session.verify = False
-    
+
     uri = 'https://%s' % getenv('APIC_HOSTNAME')
-    
+
     if getenv('CONNECTION_TYPE').upper() == 'USERPASS':
         payload = {
             "aaaUser":{
@@ -114,7 +118,18 @@ def test_connectivity():
             'status': status,
             'message': return_msg
         })
-        
+
+
+    # check Kafka server connectivity
+    try:
+        consumer = KafkaConsumer(getenv('KAFKA_TOPIC'), bootstrap_servers=getenv('KAFKA_IP'))
+    except kafka.errors.NoBrokersAvailable as error:
+        pigeon.sendUpdate({
+            'status': 'error',
+            'message': "Cannot connect to Kafka server"
+        })
+
+
 ensure_requirements()
 if getenv('ACTION').upper() in VALID_ACTIONS:
     pigeon.sendInfoMessage('Starting action: %s for type: %s' % (getenv('ACTION'), getenv('TARGET_TYPE')))
