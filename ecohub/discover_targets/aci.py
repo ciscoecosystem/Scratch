@@ -126,7 +126,12 @@ def test_connectivity():
     except kafka.errors.NoBrokersAvailable as error:
         pigeon.sendUpdate({
             'status': 'error',
-            'message': "Cannot connect to Kafka server"
+            'message': 'Cannot connect to Kafka server'
+        })
+    else:
+        pigeon.sendUpdate({
+            'status': 200,
+            'message': 'Connected to Kafka server'
         })
 
 
