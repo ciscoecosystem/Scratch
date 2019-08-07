@@ -86,7 +86,7 @@ def test_connectivity():
         session.cert = (CERT_PATH, KEY_PATH)
     try:
         resp = session.post('%s/api/aaaLogin.json' % uri, data=json.dumps(payload), timeout=10)
-        consumer = KafkaConsumer(getenv('KAFKA_TOPIC'), bootstrap_servers=getenv('KAFKA_IP'))
+        # consumer = KafkaConsumer(getenv('KAFKA_TOPIC'), bootstrap_servers=getenv('KAFKA_IP'))
 
     # most likely a DNS issue
     except exceptions.ConnectionError or exceptions.ConnectTimeout or exceptions.Timeout:

@@ -14,8 +14,7 @@ PYTHON_PATH = 'runner/bin/python'
 # Define pigeon messenger
 pigeon = Pigeon()
 VALID_TARGET_TYPES = [
-    'ACI_USER',
-    'ACI_CERT'
+    'ACI',
     'TETRATION',
     'AWX'
     ]
@@ -29,11 +28,10 @@ if getenv('TARGET_TYPE').upper() in VALID_TARGET_TYPES:
     }
     result = options[str(getenv('TARGET_TYPE')).upper()]()
 else:
-    pigeon.sendInfoMessage('ECO_ACTION FAILED')
     pigeon.sendUpdate({
         'status': 'unknown',
         'message': 'Target Type: ' + getenv('TARGET_TYPE') + 'not implemented'
     })
 
 # print a message that the container has completed its work
-# pigeon.sendInfoMessage('Action complete')
+pigeon.sendInfoMessage('Action complete')
