@@ -86,6 +86,7 @@ def test_connectivity():
         session.cert = (CERT_PATH, KEY_PATH)
     try:
         resp = session.post('%s/api/aaaLogin.json' % uri, data=json.dumps(payload), timeout=10)
+        consumer = KafkaConsumer(getenv('KAFKA_TOPIC'), bootstrap_servers=getenv('KAFKA_IP'))
 
     # most likely a DNS issue
     except exceptions.ConnectionError or exceptions.ConnectTimeout or exceptions.Timeout:
@@ -103,6 +104,11 @@ def test_connectivity():
             'status': 'error',
             'message': "Invalid hostname entered"
         })
+    except kafka.errors.NoBrokersAvailable as error:
+        pigeon.sendUpdate({
+            'status': 'error',
+            'message': 'Cannot connect to Kafka server'
+        })
     except:
         pigeon.sendUpdate({
             'status': 'error',
@@ -118,22 +124,6 @@ def test_connectivity():
             'status': status,
             'message': return_msg
         })
-
-
-    # check Kafka server connectivity
-    try:
-        consumer = KafkaConsumer(getenv('KAFKA_TOPIC'), bootstrap_servers=getenv('KAFKA_IP'))
-    except kafka.errors.NoBrokersAvailable as error:
-        pigeon.sendUpdate({
-            'status': 'error',
-            'message': 'Cannot connect to Kafka server'
-        })
-    else:
-        pigeon.sendUpdate({
-            'status': 200,
-            'message': 'Connected to Kafka server'
-        })
-
 
 ensure_requirements()
 if getenv('ACTION').upper() in VALID_ACTIONS:
