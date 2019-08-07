@@ -36,4 +36,4 @@ else:
     })
 
 # print a message that the container has completed its work
-pigeon.sendInfoMessage('Action complete')
+# pigeon.sendInfoMessage('Action complete')
