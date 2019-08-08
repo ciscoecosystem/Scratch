@@ -1,5 +1,5 @@
 # List of all supported target types
-docker_image: ecohub/discover_target:v1.3
+docker_image: maxyso/discover_targets # ecohub/discover_target:v1.3
 targets:
   - type: aci
     connection_type: userpass
