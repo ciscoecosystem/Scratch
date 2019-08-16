@@ -205,14 +205,14 @@ class snow_data:
                     query = self.form_query('sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time))
                     self.query_tables(self.delete_table, last_query_time, current_query_time, query, False, 'delete', data_producer)
 
-                while True:
-                    variable = input('Make the changes on the SNOW. Press y\n')
-                    if variable != 'y':
-                        continue
-                    variable = input('Are you sure? Press y\n')
-                    if variable != 'y':
-                        continue
-                    break
+                # while True:
+                #     variable = input('Make the changes on the SNOW. Press y\n')
+                #     if variable != 'y':
+                #         continue
+                #     variable = input('Are you sure? Press y\n')
+                #     if variable != 'y':
+                #         continue
+                #     break
 
                 # self.logger.info('Starting the timer')
                 # self.start_timer()

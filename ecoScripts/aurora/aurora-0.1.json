@@ -1,85 +1,85 @@
 {
-    "version": "0.1",
-    "type": "api",
-    "configurable": true,
-    "schedulable": true,
-    "docker_image": "maxyso/aurora",
-    "config_parameters": [
+  "version": "0.1",
+  "type": "api",
+  "configurable": true,
+  "schedulable": true,
+  "docker_image": "maxyso/aurora",
+  "config_parameters": [
+    {
+      "name": "connection_parameters",
+      "label": "Connection Parameters",
+      "order": 1,
+      "controls": [
         {
-            "name": "connection_parameters",
-            "label": "Connection Parameters",
-            "order": 1,
-            "controls": [
-                {
-                    "label": "Test Connectivity",
-                    "action": "test_connectivity",
-                    "message": "Testing Connectivity",
-                    "type": "icon",
-                    "icon": {
-                        "group": "action",
-                        "name": "assessment"
-                    }
-                }
-            ],
-            "items": [
-                {
-                    "name": "service_now",
-                    "label": "ServiceNow",
-                    "type": "text",
-                    "environment_variable_name": "SNOW_HOST",
-                    "required": true,
-                    "placeholder": "ServiceNow Hostname or IP",
-                    "order": 1,
-                    "verify": false
-                },
-                {
-                    "name": "snow_username",
-                    "label": "ServiceNow Username",
-                    "type": "text",
-                    "environment_variable_name": "SNOW_USER",
-                    "required": true,
-                    "placeholder": "ServiceNow Username (read-only)",
-                    "order": 2,
-                    "verify": false
-                },
-                {
-                    "name": "snow_password",
-                    "label": "ServiceNow Password",
-                    "type": "password",
-                    "environment_variable_name": "SNOW_PWD",
-                    "required": true,
-                    "placeholder": "ServiceNow Password",
-                    "order": 3,
-                    "verify": false
-                }
-            ]
+          "label": "Test Connectivity",
+          "action": "test_connectivity",
+          "message": "Testing Connectivity",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "service_now",
+          "label": "ServiceNow",
+          "type": "text",
+          "environment_variable_name": "SNOW_HOST",
+          "required": true,
+          "placeholder": "ServiceNow Hostname or IP",
+          "order": 1,
+          "verify": false
         },
         {
-            "name": "annotation_options",
-            "label": "Annotation Options",
-            "order": 2,
-            "items": [
-                {
-                    "name": "tenant_name",
-                    "label": "Tenant Name",
-                    "type": "text",
-                    "environment_variable_name": "TENANT_NAME",
-                    "placeholder": "Tenant Name",
-                    "required": true,
-                    "order": 1,
-                    "verify": false
-                },
-                {
-                    "name": "ap_name",
-                    "label": "Application Profile Name",
-                    "type": "text",
-                    "environment_variable_name": "AP_NAME",
-                    "placeholder": "Application Profile Name",
-                    "required": true,
-                    "order": 2,
-                    "verify": false
-                }
-            ]
+          "name": "snow_username",
+          "label": "ServiceNow Username",
+          "type": "text",
+          "environment_variable_name": "SNOW_USER",
+          "required": true,
+          "placeholder": "ServiceNow Username (read-only)",
+          "order": 2,
+          "verify": false
+        },
+        {
+          "name": "snow_password",
+          "label": "ServiceNow Password",
+          "type": "password",
+          "environment_variable_name": "SNOW_PWD",
+          "required": true,
+          "placeholder": "ServiceNow Password",
+          "order": 3,
+          "verify": false
         }
-    ]
+      ]
+    },
+    {
+      "name": "annotation_options",
+      "label": "Annotation Options",
+      "order": 2,
+      "items": [
+        {
+          "name": "tenant_name",
+          "label": "Tenant Name",
+          "type": "text",
+          "environment_variable_name": "TENANT_NAME",
+          "placeholder": "Tenant Name",
+          "required": true,
+          "order": 1,
+          "verify": false
+        },
+        {
+          "name": "ap_name",
+          "label": "Application Profile Name",
+          "type": "text",
+          "environment_variable_name": "AP_NAME",
+          "placeholder": "Application Profile Name",
+          "required": true,
+          "order": 2,
+          "verify": false
+        }
+      ]
+    }
+  ]
 }
