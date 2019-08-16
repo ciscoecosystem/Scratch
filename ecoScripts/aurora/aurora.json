@@ -3,7 +3,7 @@
     "type": "api",
     "configurable": true,
     "schedulable": false,
-    "docker_image": "ecohub/aurora:lastest",
+    "docker_image": "maxyso/aurora:lastest",
     "config_parameters": [
         {
             "name": "connection_parameters",
