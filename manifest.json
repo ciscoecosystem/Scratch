@@ -1,67 +1,7 @@
 [
     {
-        "name": "vcenter",
-        "label": "vCenter Annotations",
-        "versions": [
-            "0.2", "0.3"
-        ],
-        "latest": "0.3",
-        "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/vcenter",
-        "icon": "icon.png",
-        "tags": "vmware",
-        "required_targets": ["tetration"]
-    },
-    {
-        "name": "infoblox",
-        "label": "Infoblox Annotations",
-        "versions": [
-            "0.1", "1.1", "1.2"
-        ],
-        "latest": "1.2",
-        "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/infoblox",
-        "icon": "icon.png",
-        "tags": "ipam",
-        "required_targets": ["tetration"]
-    },
-    {
-        "name": "awx-tasks",
-        "label": "AWX Task Automator",
-        "versions": [
-            "1.0", "1.1", "1.2", "1.3", "1.4"
-        ],
-        "latest": "1.4",
-        "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/awx-tasks",
-        "icon": "icon.png",
-        "tags": "ansible",
-        "required_targets": ["awx"]
-    },
-    {
-        "name": "deployment-management",
-        "label": "Deployment Management (wip)",
-        "versions": [
-            "0.1", "0.2", "0.3", "0.4", "0.5", "0.6"
-        ],
-        "latest": "0.6",
-        "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/deployment-management",
-        "icon": "icon.png",
-        "tags": "ansible",
-        "required_targets": ["awx", "tetration"]
-    },
-    {
-        "name": "user-management",
-        "label": "Lab User Management (wip)",
-        "versions": [
-            "0.1"
-        ],
-        "latest": "0.1",
-        "path": "https://raw.githubusercontent.com/techBeck03/Scratch/runner/ecoScripts/user-management",
-        "icon": "icon.png",
-        "tags": "user",
-        "required_targets": ["tetration"]
-    },
-    {
-        "name": "aurora",
-        "label": "Aurora",
+        "name": "service_now",
+        "label": "ServiceNow",
         "versions": [
             "0.1"
         ],
