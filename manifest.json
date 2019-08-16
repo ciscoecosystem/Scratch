@@ -6,7 +6,7 @@
       "0.1"
     ],
     "latest": "0.1",
-    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/max-test/ecoScripts/aurora",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/max-test/ecoScripts/service_now",
     "icon": "icon.png",
     "tags": "user",
     "required_targets": [
