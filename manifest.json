@@ -58,5 +58,17 @@
         "icon": "icon.png",
         "tags": "user",
         "required_targets": ["tetration"]
+    },
+    {
+        "name": "aurora",
+        "label": "Aurora",
+        "versions": [
+            "0.1"
+        ],
+        "latest": "0.1",
+        "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/max-test/ecoScripts/aurora",
+        "icon": "icon.png",
+        "tags": "user",
+        "required_targets": ["aci"]
     }
 ]

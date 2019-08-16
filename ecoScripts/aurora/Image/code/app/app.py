@@ -8,7 +8,7 @@ import threading
 
 # relative imports
 from .. import app
-from .logger import Logger
+from ..logger import Logger
 from .apic import APIC
 
 exit = threading.Event() # condition in all looping threads, exit when set

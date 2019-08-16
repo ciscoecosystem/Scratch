@@ -13,9 +13,9 @@ def print_message(message):
     is set and without indentation if it is not set
     '''
     if os.getenv('DEBUG'):
-        print json.dumps(message, indent=4)
+        print(json.dumps(message, indent=4))
     else:
-        print json.dumps(message)
+        print(json.dumps(message))
 
 # return a message that the container has started
 pigeon.sendInfoMessage("Container has started.")

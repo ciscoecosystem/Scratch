@@ -81,7 +81,7 @@ class ConsumerThread(AuroraThread):
 
         try:
             self.logger.info("Connecting to Kafka server")
-            self.consumer = KafkaConsumer(self.config['kafka_topic'], bootstrap_servers=self.config['kafka_ip'])
+            self.consumer = KafkaConsumer(self.config['kafka_topic'], bootstrap_servers=self.config['kafka_ip'], auto_offset_reset='earliest')
             self.logger.info("Successfully connected to Kafka")
 
             self.db = Database() # TODO specify host/port, from config? Add mongo info to config

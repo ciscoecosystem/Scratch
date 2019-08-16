@@ -1,0 +1,10 @@
+kafka_ip: ec2-3-215-226-109.compute-1.amazonaws.com
+kafka_port: 9092
+kafka_topic: KAFKA_OUTPUT_TOPIC
+
+aci_ip: 173.36.219.190
+aci_username: admin
+aci_password: ins3965!
+
+tenant: ProjectAurora
+application_profile: test

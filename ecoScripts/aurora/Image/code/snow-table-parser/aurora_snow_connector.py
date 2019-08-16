@@ -10,7 +10,7 @@ from pykafka import KafkaClient
 from pykafka.common import OffsetType
 from datetime import datetime, timedelta, timezone
 
-from logger import Logger
+from ..logger import Logger
 from exception_handler import handle_exception
 
 class snow_data:
@@ -18,7 +18,7 @@ class snow_data:
     def __init__(self):
         config_dict = self.load_config()
         self.logger = Logger.get_logger()
-        
+
         # kafka details
         self.kafka_ip = os.environ.get(config_dict['kafka_ip'])
         self.kafka_port = os.environ.get(config_dict['kafka_port'])
@@ -26,7 +26,7 @@ class snow_data:
         self.kafka_data_topic = os.environ.get(config_dict['kafka_data_topic'])
         self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
         self.restart_from_offset = config_dict['restart_from_offset']
-        
+
         # SNOW configs
         self.snow_url = config_dict['snow_url']
         self.snow_username = config_dict['snow_username']
@@ -36,7 +36,7 @@ class snow_data:
 
         # polling interval
         self.polling_interval = config_dict['polling_interval']
-        
+
         # SNOW tables
         self.parent_table = config_dict['parent_table']
         self.child_tables = config_dict['child_tables']
@@ -44,7 +44,7 @@ class snow_data:
         self.relationship_table = config_dict['relationship_table']
         self.relationship_type_table = config_dict['relationship_type_table']
 
-    
+
     @handle_exception
     def load_config(self):
         """
@@ -54,7 +54,7 @@ class snow_data:
         with open(filename, 'r') as stream:
             return yaml.safe_load(stream)
 
-    
+
     @handle_exception
     def get_checkpoint(self, client):
         """
@@ -70,7 +70,7 @@ class snow_data:
         offset_consumer.reset_offsets(offsets)
         return offset_consumer.consume().value.decode('utf-8')
 
-    
+
     @handle_exception
     def write_checkpoint(self, client, current_query_time):
         """
@@ -81,7 +81,7 @@ class snow_data:
         current_query_time = str(current_query_time)
         offset_producer.produce(str.encode(current_query_time))
 
-    
+
     @handle_exception
     def read_data(self, table, query):
         """
@@ -92,7 +92,7 @@ class snow_data:
         self.logger.debug('Response of read data from table {}: {}'.format(table, response.text))
         return response.json()
 
-    
+
     @handle_exception
     def filter_table_data(self, response, query):
         """
@@ -112,7 +112,7 @@ class snow_data:
                 mark_table.append(table_name)
         return filtered_response
 
-    
+
     @handle_exception
     def form_query(self, time_filter):
         """
@@ -125,7 +125,7 @@ class snow_data:
             query = '{}^ORtablename={}'.format(query, table)
         return query
 
-    
+
     @handle_exception
     def create_ci_info(self, response, category):
         """
@@ -137,7 +137,7 @@ class snow_data:
         response['category'] = category
         return response
 
-    
+
     @handle_exception
     def write_data(self, producer, write_data):
         """
@@ -147,7 +147,7 @@ class snow_data:
         value = value.encode('utf-8')
         producer.produce(value)
 
-    
+
     @handle_exception
     def query_tables(self, tablename, last_query_time, current_query_time, query, to_filter, category, data_producer):
         """
@@ -213,7 +213,7 @@ class snow_data:
                     if variable != 'y':
                         continue
                     break
-                
+
                 # self.logger.info('Starting the timer')
                 # self.start_timer()
                 # self.logger.info('Timer over\n')
@@ -221,7 +221,7 @@ class snow_data:
             self.logger.error(e)
             self.logger.error('Exiting code')
             sys.exit()
-            
+
 
 if __name__ == '__main__':
     sd = snow_data()
