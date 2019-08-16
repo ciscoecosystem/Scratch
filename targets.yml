@@ -51,16 +51,16 @@ targets:
         icon: vpn_key
         type: secret
         required: true
-      - name: kafka_ip
-        label: Kafka server IP address
-        icon: dns
-        type: text
-        required: true
-      - name: kafka_topic
-        label: Kafka topic name
-        icon: person
-        type: text
-        required: true
+      # - name: kafka_ip
+      #   label: Kafka server IP address
+      #   icon: dns
+      #   type: text
+      #   required: true
+      # - name: kafka_topic
+      #   label: Kafka topic name
+      #   icon: person
+      #   type: text
+      #   required: true
 
   # - type: tetration
   #   label: Tetration

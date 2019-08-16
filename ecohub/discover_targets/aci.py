@@ -13,8 +13,8 @@ REQUIRED_ENVS_USERPASS = [
     'APIC_HOSTNAME',
     'ACI_USERNAME',
     'ACI_PASSWORD',
-    'KAFKA_IP',
-    'KAFKA_TOPIC'
+    # 'KAFKA_IP',
+    # 'KAFKA_TOPIC'
 ]
 
 REQUIRED_ENVS_CERTIFICATE = [
@@ -86,7 +86,7 @@ def test_connectivity():
         session.cert = (CERT_PATH, KEY_PATH)
     try:
         resp = session.post('%s/api/aaaLogin.json' % uri, data=json.dumps(payload), timeout=10)
-        consumer = KafkaConsumer(getenv('KAFKA_TOPIC'), bootstrap_servers=getenv('KAFKA_IP'))
+        # consumer = KafkaConsumer(getenv('KAFKA_TOPIC'), bootstrap_servers=getenv('KAFKA_IP'))
 
     # most likely a DNS issue
     except exceptions.ConnectionError or exceptions.ConnectTimeout or exceptions.Timeout:
@@ -104,11 +104,11 @@ def test_connectivity():
             'status': 'error',
             'message': "Invalid hostname entered"
         })
-    except kafka.errors.NoBrokersAvailable as error:
-        pigeon.sendUpdate({
-            'status': 'error',
-            'message': 'Cannot connect to Kafka server'
-        })
+    # except kafka.errors.NoBrokersAvailable as error:
+    #     pigeon.sendUpdate({
+    #         'status': 'error',
+    #         'message': 'Cannot connect to Kafka server'
+    #     })
     except:
         pigeon.sendUpdate({
             'status': 'error',
