@@ -2,6 +2,7 @@ import subprocess
 import os
 import json
 import glob
+import time
 
 from pigeon import Pigeon
 
@@ -19,9 +20,17 @@ def print_message(message):
 
 # return a message that the container has started
 pigeon.sendInfoMessage("Container has started.")
+pigeon.sendInfoMessage(json.dumps(dict(os.environ), indent=2))
 
 if os.getenv('ACTION'):
+    pigeon.sendInfoMessage("Starting mongo")
+    subprocess.Popen(["mongod", "--config", "/etc/mongod.conf"], stdout=subprocess.DEVNULL).wait()
+    # time.sleep(0.5) # TODO remove or figure out, giving server time to startup
+
+    pigeon.sendInfoMessage("Starting action")
     if os.environ['ACTION'] == 'TEST_CONNECTIVITY':
+        subprocess.call(["python", "test_connectivity.py"])
+    elif os.environ['ACTION'] == 'VALIDATE':
         subprocess.call(["python", "test_connectivity.py"])
     elif os.environ['ACTION'] == 'RUN_INTEGRATION':
         subprocess.call(["python", "run_integration.py"])
@@ -41,6 +50,8 @@ else:
         'status': 404,
         'message': 'The ACTION environment variable is not defined.'
     })
+
+subprocess.Popen(["mongo", "127.0.0.1/admin", "--eval", "db.shutdownServer()"], stdout=subprocess.DEVNULL)
 
 # print a message that the container has completed its work
 pigeon.sendInfoMessage("Container is stopping.")

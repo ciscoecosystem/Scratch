@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import kafka
 from kafka import KafkaConsumer
 from pymongo import MongoClient
@@ -10,18 +11,28 @@ from pigeon import Pigeon
 pigeon = Pigeon()
 
 def test_connector():
-    pass
+    return
 
 def test_consumer():
-    topic = "KAFKA_OUTPUT_TOPIC" # TODO figure out how to pass these
-    kafka_ip = "ec2-3-215-226-109.compute-1.amazonaws.com"
-    mongo_ip = None
-    mongo_port = None
+    topic = 'KAFKA_OUTPUT_TOPIC' # TODO figure out how to pass these
+    kafka_ip = os.getenv('CONSUMER_KAFKA_IP')
+    mongo_ip = os.getenv('MONGO_HOST')
+    mongo_port = int(os.getenv('MONGO_PORT'))
 
     try:
+        pigeon.sendInfoMessage("Testing Kafka")
         consumer = KafkaConsumer(topic, bootstrap_servers=kafka_ip)
-        # client = MongoClient(mongo_ip, mongo_port, serverSelectionTimeoutMS=1000)
+        pigeon.sendInfoMessage("Testing Kafka complete")
+
+        pigeon.sendInfoMessage("Testing Mongo")
+        client = MongoClient(mongo_ip, mongo_port, serverSelectionTimeoutMS=1000)
+        
+        # # TODO figure out solution, dont let this stdout mess up ecohub
+        # f = open(os.devnull, 'w')
+        # tmp = sys.stdout
+        # sys.stdout = f
         # client.admin.command('ismaster')
+        # sys.stdout = tmp
     except kafka.errors.NoBrokersAvailable as error:
         pigeon.sendUpdate({
             'status': 'error',
@@ -33,11 +44,14 @@ def test_consumer():
             'message': 'Cannot connect to MongoDB server'
         })
     else:
+        pigeon.sendInfoMessage("Before connected")
         pigeon.sendUpdate({
             'status': 200,
-            'message': 'Aurora Kafka consumer connected'
-        })
+            'message': 'Kafka and Mongo server connected'
+        }, last=True) # REVIEW When does last=True?
+        pigeon.sendInfoMessage("after connected")
 
 
 if __name__ == "__main__":
+    pigeon.sendInfoMessage("In test_connectivity.main()")
     test_consumer()

@@ -37,7 +37,7 @@ class APIC:
         filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
         with open(filename, 'r') as stream:
             creds = yaml.safe_load(stream)
-        self.base_url = creds['aci_ip']
+        self.base_url = creds['aci_ip'] # REVIEW does this include https/http
         self.login_payload = {'aaaUser': {'attributes':{'pwd': creds['aci_password'], 'name': creds['aci_username']}}}
 
     def close(self):

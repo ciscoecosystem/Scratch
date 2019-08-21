@@ -2,16 +2,17 @@ import os
 import sys
 import time
 import json
-import yaml
-import queue
-import requests
-from bs4 import BeautifulSoup
+# import queue
 from pykafka import KafkaClient
 from pykafka.common import OffsetType
 from datetime import datetime, timedelta, timezone
 
+import yaml
+import requests
+# from bs4 import BeautifulSoup
+
 from ..logger import Logger
-from exception_handler import handle_exception
+from .exception_handler import handle_exception
 
 class snow_data:
     @handle_exception
@@ -28,9 +29,9 @@ class snow_data:
         self.restart_from_offset = config_dict['restart_from_offset']
 
         # SNOW configs
-        self.snow_url = config_dict['snow_url']
-        self.snow_username = config_dict['snow_username']
-        self.snow_password = config_dict['snow_password']
+        self.snow_url = os.getenv('SNOW_HOST') # config_dict['snow_url']
+        self.snow_username = os.getenv('SNOW_USER') # config_dict['snow_username']
+        self.snow_password = os.getenv('SNOW_PWD') # config_dict['snow_password']
         self.source_instance = config_dict['source_instance']
         self.discovery_source = config_dict['discovery_source']
 

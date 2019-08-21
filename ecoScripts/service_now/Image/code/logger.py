@@ -111,16 +111,32 @@ class Logger:
 class PigeonFormatter(logging.Formatter):
     """Logging Formatter to add colors and count warning / errors"""
 
-    msg = "{{\"status_code\": {0}, \"message\": %(msg)s, \"data\": %(data)s}}"
+    logging_format = "{{\"status_code\": {0}, \"message\": \"{1}\", \"data\": %(data)s}}"
+
+    # msg = "{{\"status_code\": {0}, \"message\": \"%(msg)s\", \"data\": %(data)s}}"
 
     FORMATS = {
         logging.ERROR: 400,
         logging.WARNING: 300,
+        logging.CRITICAL: 200, # TODO change later
         logging.INFO: 100,
+        logging.DEBUG: 100
     }
 
     def format(self, record):
+        # get msg string and escape double quotes
+        msg_formatter = logging.Formatter("%(msg)s")
+        escaped_quotes = msg_formatter.format(record).replace('\"','\\\"')
+
+        # insert status code and escaped msg into format string
         status_code = self.FORMATS.get(record.levelno, 404)
-        fmt = self.msg.format(status_code)
-        formatter = logging.Formatter(fmt)
-        return formatter.format(record)
+        json_msg = self.logging_format.format(status_code, escaped_quotes)
+
+        # format 'data' field into final output
+        output_formatter = logging.Formatter(json_msg)
+        return output_formatter.format(record)
+
+        # status_code = self.FORMATS.get(record.levelno, 404)
+        # fmt = self.msg.format(status_code)
+        # formatter = logging.Formatter(fmt)
+        # return formatter.format(record)

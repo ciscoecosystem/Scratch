@@ -54,7 +54,7 @@ def main():
 
     apic_thread.join()
     epg_thread.join()
-    logger.info("App exited succesfully")
+    logger.critical("App exited succesfully") #TODO change level
 
 if __name__ == '__main__':
     main()

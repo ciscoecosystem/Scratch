@@ -5,7 +5,7 @@ snow_password: Crest@123
 
 # SNOW table configs
 parent_table: cmdb_ci
-child_tables: 
+child_tables:
   - cmdb_ci_resource_pool
   - cmdb_ci_esx_server
   - cmdb_ci_vcenter_dvs
@@ -21,7 +21,7 @@ child_tables:
 delete_table: sys_audit_delete
 relationship_table: cmdb_rel_ci
 relationship_type_table: cmdb_rel_type
-# rel_types: 
+# rel_types:
 #   - Depends on::Used by
 #  - Used by::Uses
 #  - Runs on::Runs

@@ -8,7 +8,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure
 # absolute import
 # from app.logger import Logger
 # relative import
-from .logger import Logger
+from ..logger import Logger
 
 # TODO handle pymongo.errors
 class Database:

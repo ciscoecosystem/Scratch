@@ -17,7 +17,7 @@ from pymongo import MongoClient
 
 # relative imports
 from .apic import APIC
-from .logger import Logger
+from ..logger import Logger
 from .database import Database
 
 
@@ -79,12 +79,18 @@ class ConsumerThread(AuroraThread):
         self.logger.info("Reading configuration from file")
         self.config = self.get_config()
 
+        # Reading configuration from environment variables
+        self.config['tenant'] = os.getenv('TENANT_NAME')
+        self.config['application_profile'] = os.getenv('AP_NAME')
+        self.config['mongo_host'] = os.getenv('MONGO_HOST')
+        self.config['kafka_topic'] = os.getenv('KAFKA_OUTPUT_TOPIC')
+
         try:
             self.logger.info("Connecting to Kafka server")
             self.consumer = KafkaConsumer(self.config['kafka_topic'], bootstrap_servers=self.config['kafka_ip'], auto_offset_reset='earliest')
             self.logger.info("Successfully connected to Kafka")
 
-            self.db = Database() # TODO specify host/port, from config? Add mongo info to config
+            self.db = Database(host=self.config['mongo_host']) # TODO specify host/port, from config? Add mongo info to config
         except (kafka.errors.NoBrokersAvailable, pymongo.errors.ConnectionFailure) as error:
             self.logger.error(str(error))
             self.exit.set()
@@ -142,7 +148,7 @@ class ConsumerThread(AuroraThread):
                 self.db.insert_endpoint(props)
                 self.logger.debug("Added endpoint {} to DB".format(props['name']))
             else:
-                self.db.update_endpoint(props['_id'], props)
+                self.db.update_endpoint(props['_id'], {'$set': props})
                 self.logger.debug("Updated endpoint {}".format(props['name']))
         elif status == 'delete':
             endpoint = self.db.get_endpoint(props['_id'])
@@ -192,17 +198,17 @@ class ConsumerThread(AuroraThread):
                     self.db.update_epg_membership(props['_id'], props['members'])
                     self.logger.debug("Updated EPG {} in DB".format(props['name']))
 
-                # TODO update endpoints on APIC, using `removed` and `added`
-                for id in removed:
-                    self.db.update_endpoint(id, {'$set': {'epg': ''}})
-                    self.logger.debug("Removed grouping for endpoint {}".format(id))
-                for id in added:
-                    endpoint = self.db.get_endpoint(id)
-                    if endpoint['epg'] != props['_id']: # disassociate EP from previous EPG
-                        self.db.update_epg_membership(endpoint['epg'], [id], remove=True)
-                        self.logger.debug("Removed {} from EPG {}".format(id, endpoint['epg']))
-                        self.db.update_endpoint(id, {'$set': {'epg': props['_id']}})
-                    self.logger.debug("Updated grouping for endpoint {}".format(id))
+                    # TODO update endpoints on APIC, using `removed` and `added`
+                    for id in removed:
+                        self.db.update_endpoint(id, {'$set': {'epg': ''}})
+                        self.logger.debug("Removed grouping for endpoint {}".format(id))
+                    for id in added:
+                        endpoint = self.db.get_endpoint(id)
+                        if endpoint['epg'] != props['_id']: # disassociate EP from previous EPG
+                            self.db.update_epg_membership(endpoint['epg'], [id], remove=True)
+                            self.logger.debug("Removed {} from EPG {}".format(id, endpoint['epg']))
+                            self.db.update_endpoint(id, {'$set': {'epg': props['_id']}})
+                        self.logger.debug("Updated grouping for endpoint {}".format(id))
 
         elif status == 'delete':
             self.create_epg(tenant, ap, props['name'], delete=True)
@@ -235,10 +241,9 @@ class ConsumerThread(AuroraThread):
 
             # TODO determine if/how/what filter info will contain
             if 'filter_entries' not in props:
-                props['filter_entries'] = "any"
+                props['filter_entries'] = "ANY"
             if 'action' not in props:
                 props['action'] = 'deny'
-
 
             # find filter
             if props['filter_entries'] == "ANY":
