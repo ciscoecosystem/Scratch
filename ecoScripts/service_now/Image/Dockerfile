@@ -38,8 +38,8 @@ ENV KAFKA_OUTPUT_TOPIC=pipeline_output
 ENV KAFKA_OFFSET_TOPIC=snow_offset
 
 # local testing environment variables
-ENV CONN="python -m code.snow-table-parser.aurora_snow_connector"
-ENV CONS="python -m code.app.app"
+ENV CONN="python -m snow.snow-table-parser.aurora_snow_connector"
+ENV CONS="python -m snow.app.app"
 
 # run the eco_action script using venv on launch
 ENTRYPOINT [ "python", "eco_action.py" ]

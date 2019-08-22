@@ -32,7 +32,7 @@ relationship_type_table: cmdb_rel_type
 polling_interval: 120
 
 # Kafka details
-kafka_ip: KAFKA_IP
+kafka_ip: KAFKA_HOSTNAME
 kafka_port: KAFKA_PORT
 kafka_data_topic: KAFKA_INPUT_TOPIC
 kafka_offset_topic: KAFKA_OFFSET_TOPIC

@@ -29,7 +29,7 @@ class snow_data:
         self.restart_from_offset = config_dict['restart_from_offset']
 
         # SNOW configs
-        self.snow_url = os.getenv('SNOW_HOSTNAME') # config_dict['snow_url']
+        self.snow_url = os.getenv('SNOW_URL') # config_dict['snow_url']
         self.snow_username = os.getenv('SNOW_USERNAME') # config_dict['snow_username']
         self.snow_password = os.getenv('SNOW_PASSWORD') # config_dict['snow_password']
         self.source_instance = config_dict['source_instance']

@@ -26,9 +26,9 @@
           "name": "service_now",
           "label": "ServiceNow",
           "type": "text",
-          "environment_variable_name": "SNOW_HOSTNAME",
+          "environment_variable_name": "SNOW_URL",
           "required": true,
-          "placeholder": "ServiceNow Hostname or IP",
+          "placeholder": "ServiceNow URL (including protocol)",
           "order": 1,
           "verify": false
         },
