@@ -30,14 +30,10 @@ def handler(signum, frame):
 #         print("Main thread ")
 #         exit.wait(300)
 
-def clear_log():
-    with open("aurora.log", "w"):
-        pass
 
 def main():
     signal.signal(signal.SIGINT, handler)
 
-    clear_log()
     logger = Logger.get_logger()
     logger.info("Starting consumer")
 

@@ -44,11 +44,11 @@ class APICThread(AuroraThread):
         login_response = apic.login()
         if login_response.status_code != 200:
             apic.logger.error('Unable to login into APIC.  Error: {}'.format(login_response.text))
-            return # TODO figure out how to possibly retry etc
             apic.logger.error("Shutting down")
             self.exit.set()
+            return  # TODO figure out how to possibly retry etc
 
-        self.exit.wait(270)
+        self.exit.wait(270) # initial login just occurred, no need to refresh immediately; essentially a do-while
         while not self.exit.is_set():
             apic.refresh()
             self.exit.wait(270)
@@ -68,13 +68,7 @@ class ConsumerThread(AuroraThread):
     def __init__(self, exit, lock):
         super(ConsumerThread, self).__init__(exit, lock)
 
-    @staticmethod
-    def get_config():
-        # filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
-        # with open(filename, 'r') as f:
-        #     config = yaml.safe_load(f)
-        # return config
-
+    def get_config(self):
         # Reading configuration from environment variables
         self.config['tenant'] = os.getenv('TENANT_NAME')
         self.config['application_profile'] = os.getenv('AP_NAME')
@@ -107,11 +101,6 @@ class ConsumerThread(AuroraThread):
 
         self.logger.info("Waiting for messages from Kafka")
         while not self.exit.is_set():
-            # for msg in self.consumer:
-            #     self.logger.debug("Received message from Kafka")
-            #     self.process_message(msg)
-            #     if self.exit.is_set():
-            #         break
             msg_pack = self.consumer.poll()
             for tp, messages in msg_pack.items():
                 for msg in messages:
@@ -126,6 +115,9 @@ class ConsumerThread(AuroraThread):
         self.logger.info("Consumer thread exited succesfully")
 
     def process_message(self, msg):
+        """Take msg as string and get dictionary
+        Do basic key/value processing and call appropriate function for message type
+        """
         props = json.loads(msg.value)
         props['_id'] = props['uuid']
         status = props['status']
@@ -146,7 +138,7 @@ class ConsumerThread(AuroraThread):
 
     def process_endpoint_message(self, props, status):
         """Process endpoint message"""
-        if status == 'create' or status == 'updated':
+        if status == 'create' or status == 'update':
 
             endpoint = self.db.get_endpoint(props['_id'])
             if not endpoint:
@@ -166,34 +158,37 @@ class ConsumerThread(AuroraThread):
 
     def process_grouping_message(self, props, status):
         """Process grouping message"""
-
-        #### get this info from some other channel later
         tenant = self.config['tenant']
         ap = self.config['application_profile']
-        ####
-        if status == 'create' or status == 'updated':
-            epg = self.db.get_epg(props['_id'])
+
+        if status == 'create' or status == 'update':
+            epg = self.db.get_epg(props['_id']) # get existing app state for EPG
 
             # Store endpoint membership with EP uuid instead of sys_id
+            # REVIEW currently checks for incorrect message order, not needed if msg source is reliable
             sysid_to_uuid = lambda x: self.db.get_endpoint(x, identifier='sys_id')['_id']
-            try: # REVIEW should we worry about possible msg order problems?
+            try:
                 props['members'] = list(map(sysid_to_uuid, props['members']))
             except KeyError as error:
                 self.logger.warning("EPG created before member EPs")
 
-            if not epg:
+            if not epg: # no previous state; creation of new EPG
                 self.create_epg(tenant, ap, props['name'])
                 self.logger.debug("Created EPG {} on APIC".format(props['name']))
                 props['consumed'] = []
                 props['provided'] = []
                 self.db.insert_epg(props)
                 self.logger.debug("Added endpoint {} to DB".format(props['name']))
-            else:
+            else: # update existing EPG
+
                 # TODO change EPG setting on APIC if applicable
+                # pseudocode
                 # if epg_info_changed():
                 #     make_apic_call() # for now, EPG is defined by name only, no changes to make
                 #     update_db_entry()
 
+                # update membership in database
+                # TODO update config on APIC, currently app has no concept of EPs on APIC
                 prev = set(epg['members'])
                 update = set(props['members'])
                 if prev != update:
@@ -237,15 +232,13 @@ class ConsumerThread(AuroraThread):
             pass # TODO possibly error handle if msg is bad
 
     def process_contract_message(self, props, status):
-        #### get this info from some other channel later
         tenant = self.config['tenant']
         ap = self.config['application_profile']
-        ####
 
-        if status == 'create' or status == 'updated':
+        if status == 'create' or status == 'update':
 
             # TODO determine if/how/what filter info will contain
-            if 'filter_entries' not in props:
+            if 'filter_entries' not in props: # TODO figure out filter_entries, current messages missing field
                 props['filter_entries'] = "ANY"
             if 'action' not in props:
                 props['action'] = 'deny'
@@ -259,7 +252,6 @@ class ConsumerThread(AuroraThread):
                 filter_name = "-".join([tenant] + list(map(str, props['filter_entries'])))
 
             filter = self.db.get_filter(filter_name)
-             # TODO figure out how to turn entries into ACI relevant format
             if not filter: # create filter
                 self.create_filter(tenant, filter_name, props['filter_entries'])
                 self.db.insert_filter(filter_name, tenant, props['filter_entries'])
@@ -287,6 +279,8 @@ class ConsumerThread(AuroraThread):
                 self.create_contract(tenant, props['name'], filter_name, props['action'])
                 self.db.insert_contract(props)
                 contract = props
+
+                # add consumer/provider fields
                 added_cons = contract['consumer_epg']
                 added_prov = contract['provider_epg']
                 removed_cons = []
