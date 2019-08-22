@@ -7,7 +7,7 @@ pigeon = Pigeon()
 
 def main():
     pigeon.sendInfoMessage("Starting integration")
-    consumer = subprocess.Popen(["python", "-m", "snow.consumer.consumer"])
+    consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
     connector = subprocess.Popen(["python", "-m", "snow.snow-table-parser.aurora_snow_connector"])
 
     consumer.wait()
