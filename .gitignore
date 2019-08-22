@@ -4,3 +4,6 @@
 testing.py
 test_env/
 variable_dump.txt
+.idea
+__pycache__
+*.pyc

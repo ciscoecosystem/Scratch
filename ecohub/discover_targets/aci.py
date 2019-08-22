@@ -12,9 +12,7 @@ pigeon = Pigeon()
 REQUIRED_ENVS_USERPASS = [
     'APIC_HOSTNAME',
     'ACI_USERNAME',
-    'ACI_PASSWORD',
-    # 'KAFKA_IP',
-    # 'KAFKA_TOPIC'
+    'ACI_PASSWORD'
 ]
 
 REQUIRED_ENVS_CERTIFICATE = [

@@ -8,12 +8,10 @@ import requests
 import yaml
 
 # absolute imports
-# from app.logger import Logger
+# from consumer.logger import Logger
 
 # relative imports
-from .logger import Logger
-
-
+from ..logger import Logger
 
 class APIC:
     """Interface for HTTP requests to APIC
@@ -27,18 +25,24 @@ class APIC:
             cls.__apic = APIC()
         return cls.__apic
 
-    def __init__(self):
+    def __init__(self, protocol='https'):
         self.logger = Logger.get_logger()
 
         self.cookie = None
         self.session = requests.Session()
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-        filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
-        with open(filename, 'r') as stream:
-            creds = yaml.safe_load(stream)
-        self.base_url = creds['aci_ip'] # REVIEW does this include https/http
-        self.login_payload = {'aaaUser': {'attributes':{'pwd': creds['aci_password'], 'name': creds['aci_username']}}}
+        # get authentication parameters
+        apic_host = os.getenv('APIC_HOSTNAME')
+        aci_user = os.getenv('ACI_USERNAME')
+        aci_pass = os.getenv('ACI_PASSWORD')
+
+        if protocol != 'https' and protocol != 'http':
+            pass # TODO raise error
+        else:
+            self.base_url = "{0}://{}".format(protocol, apic_host)
+
+        self.login_payload = {'aaaUser': {'attributes':{'pwd': aci_pass, 'name': aci_user}}}
 
     def close(self):
         return self.session.close()

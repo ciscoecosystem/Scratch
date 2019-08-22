@@ -11,9 +11,9 @@ from kafka import KafkaConsumer
 from pymongo import MongoClient
 
 # absolute import
-# from app.apic import APIC
-# from app.logger import Logger
-# from app.database import Database
+# from consumer.apic import APIC
+# from consumer.logger import Logger
+# from consumer.database import Database
 
 # relative imports
 from .apic import APIC
@@ -70,27 +70,32 @@ class ConsumerThread(AuroraThread):
 
     @staticmethod
     def get_config():
-        filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
-        with open(filename, 'r') as f:
-            config = yaml.safe_load(f)
-        return config
-
-    def run(self):
-        self.logger.info("Reading configuration from file")
-        self.config = self.get_config()
+        # filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
+        # with open(filename, 'r') as f:
+        #     config = yaml.safe_load(f)
+        # return config
 
         # Reading configuration from environment variables
         self.config['tenant'] = os.getenv('TENANT_NAME')
         self.config['application_profile'] = os.getenv('AP_NAME')
         self.config['mongo_host'] = os.getenv('MONGO_HOST')
+        self.config['mongo_port'] = int(os.getenv('MONGO_PORT'))
         self.config['kafka_topic'] = os.getenv('KAFKA_OUTPUT_TOPIC')
+        self.config['kafka_ip'] = os.getenv('KAFKA_IP')
+
+    def run(self):
+        self.logger.info("Reading configuration from file")
+        self.config = self.get_config()
 
         try:
             self.logger.info("Connecting to Kafka server")
             self.consumer = KafkaConsumer(self.config['kafka_topic'], bootstrap_servers=self.config['kafka_ip'], auto_offset_reset='earliest')
             self.logger.info("Successfully connected to Kafka")
 
-            self.db = Database(host=self.config['mongo_host']) # TODO specify host/port, from config? Add mongo info to config
+            self.logger.info("Connecting to MongoDB")
+            self.db = Database(host=self.config['mongo_host'], port=self.config['mongo_port'])
+            self.db.admin.command('ismaster')
+            self.logger.info("Successfully connected to MongoDB")
         except (kafka.errors.NoBrokersAvailable, pymongo.errors.ConnectionFailure) as error:
             self.logger.error(str(error))
             self.exit.set()
@@ -272,7 +277,7 @@ class ConsumerThread(AuroraThread):
             ####
 
             # create new contract with above filter
-            # REVIEW below code is meant to work with multi-cons/prov contracts
+            # REVIEW below snow is meant to work with multi-cons/prov contracts
             # i.e. `type(kafka_msg['consumer_epg']) == list`
 
             # `contract` represents old entry in DB

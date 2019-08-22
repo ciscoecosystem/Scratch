@@ -14,9 +14,9 @@ def test_connector():
     return
 
 def test_consumer():
-    topic = 'KAFKA_OUTPUT_TOPIC' # TODO figure out how to pass these
-    kafka_ip = os.getenv('CONSUMER_KAFKA_IP')
-    mongo_ip = os.getenv('MONGO_HOST')
+    topic = os.getenv('KAFKA_OUTPUT_TOPIC')
+    kafka_ip = os.getenv('KAFKA_HOSTNAME')
+    mongo_ip = os.getenv('MONGO_HOSTNAME')
     mongo_port = int(os.getenv('MONGO_PORT'))
 
     try:
@@ -26,12 +26,12 @@ def test_consumer():
 
         pigeon.sendInfoMessage("Testing Mongo")
         client = MongoClient(mongo_ip, mongo_port, serverSelectionTimeoutMS=1000)
-        
+
         # # TODO figure out solution, dont let this stdout mess up ecohub
         # f = open(os.devnull, 'w')
         # tmp = sys.stdout
         # sys.stdout = f
-        # client.admin.command('ismaster')
+        client.admin.command('ismaster')
         # sys.stdout = tmp
     except kafka.errors.NoBrokersAvailable as error:
         pigeon.sendUpdate({

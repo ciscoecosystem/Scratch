@@ -29,5 +29,10 @@ In the future, absolute imports can be used; however, then the execution must st
 the base directory in the absolute imports.  
 
 For example, if in `app.py` we have
-`from Image.code.app.apic import APIC`, then we run the program as
-`python -m Image.code.app.apic` where the working directory is `Image`
+`from code.app.apic import APIC`, then we run the program as
+`python -m code.app.apic` where the working directory is `Image`
+
+If using relative imports we then have instead
+`from .apic import APIC`. As long as the current working directory is a parent of
+all the modules in the relative import, then we can run as
+`python -m relpath.to.file.apic`

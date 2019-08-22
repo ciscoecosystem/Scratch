@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, OperationFailure
 
 # absolute import
-# from app.logger import Logger
+# from consumer.logger import Logger
 # relative import
 from ..logger import Logger
 

@@ -29,9 +29,9 @@ class snow_data:
         self.restart_from_offset = config_dict['restart_from_offset']
 
         # SNOW configs
-        self.snow_url = os.getenv('SNOW_HOST') # config_dict['snow_url']
-        self.snow_username = os.getenv('SNOW_USER') # config_dict['snow_username']
-        self.snow_password = os.getenv('SNOW_PWD') # config_dict['snow_password']
+        self.snow_url = os.getenv('SNOW_HOSTNAME') # config_dict['snow_url']
+        self.snow_username = os.getenv('SNOW_USERNAME') # config_dict['snow_username']
+        self.snow_password = os.getenv('SNOW_PASSWORD') # config_dict['snow_password']
         self.source_instance = config_dict['source_instance']
         self.discovery_source = config_dict['discovery_source']
 
@@ -220,7 +220,7 @@ class snow_data:
                 # self.logger.info('Timer over\n')
         except Exception as e:
             self.logger.error(e)
-            self.logger.error('Exiting code')
+            self.logger.error('Exiting snow')
             sys.exit()
 
 

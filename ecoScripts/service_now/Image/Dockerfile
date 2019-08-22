@@ -28,20 +28,18 @@ RUN runner/bin/pip3 install -r requirements.txt
 # add venv to path
 ENV PATH="/app/runner/bin:${PATH}"
 
-# RUN mongod --config /etc/mongod.conf
-
-# local testing environment variables
-ENV MONGO_HOST=localhost
+# Temporarily hardcoded application variables
+ENV MONGO_HOSTNAME=localhost
 ENV MONGO_PORT=27017
-ENV CONSUMER_KAFKA_IP=ec2-3-215-226-109.compute-1.amazonaws.com
-ENV KAFKA_IP=ec2-3-215-226-109.compute-1.amazonaws.com
-ENV KAFKA_PORT=9092
+#ENV KAFKA_HOSTNAME=ec2-3-215-226-109.compute-1.amazonaws.com
+#ENV KAFKA_PORT=9092
 ENV KAFKA_INPUT_TOPIC=pipeline_input
 ENV KAFKA_OUTPUT_TOPIC=pipeline_output
 ENV KAFKA_OFFSET_TOPIC=snow_offset
+
+# local testing environment variables
 ENV CONN="python -m code.snow-table-parser.aurora_snow_connector"
 ENV CONS="python -m code.app.app"
-
 
 # run the eco_action script using venv on launch
 ENTRYPOINT [ "python", "eco_action.py" ]
