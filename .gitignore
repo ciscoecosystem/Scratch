@@ -7,3 +7,4 @@ variable_dump.txt
 .idea
 __pycache__
 *.pyc
+env.list
