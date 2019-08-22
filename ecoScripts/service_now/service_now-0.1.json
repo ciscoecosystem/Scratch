@@ -6,14 +6,14 @@
   "docker_image": "maxyso/aurora",
   "config_parameters": [
     {
-      "name": "connection_parameters",
-      "label": "Connection Parameters",
+      "name": "snow_connection_parameters",
+      "label": "ServiceNow Connection Parameters",
       "order": 1,
       "controls": [
         {
-          "label": "Test Connectivity",
-          "action": "test_connectivity",
-          "message": "Testing Connectivity",
+          "label": "Test ServiceNow Connectivity",
+          "action": "test_snow_connectivity",
+          "message": "Testing ServiceNow Connectivity",
           "type": "icon",
           "icon": {
             "group": "action",
@@ -55,9 +55,21 @@
       ]
     },
     {
-      "name": "aci_options",
-      "label": "ACI Options",
-      "order": 2,
+      "name": "aci_parameters",
+      "label": "ACI Parameters",
+      "order": 1,
+      "controls": [
+        {
+          "label": "Test ACI",
+          "action": "test_aci",
+          "message": "Testing ACI",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
       "items": [
         {
           "name": "tenant_name",
@@ -82,9 +94,21 @@
       ]
     },
     {
-      "name": "kafka_options",
-      "label": "Kafka Options",
+      "name": "kafka_connectivity_options",
+      "label": "Kafka Connectivity Options",
       "order": 3,
+      "controls": [
+        {
+          "label": "Test Kafka Connectivity",
+          "action": "test_kafka_connectivity",
+          "message": "Testing Kafka Connectivity",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
       "items": [
         {
           "name": "kakfa_host",
@@ -94,6 +118,16 @@
           "placeholder": "Kafka Hostname or IP",
           "required": true,
           "order": 1,
+          "verify": false
+        },
+        {
+          "name": "kakfa_port",
+          "label": "Kafka Port",
+          "type": "text",
+          "environment_variable_name": "KAFKA_PORT",
+          "placeholder": "Kafka port",
+          "required": true,
+          "order": 2,
           "verify": false
         }
       ]

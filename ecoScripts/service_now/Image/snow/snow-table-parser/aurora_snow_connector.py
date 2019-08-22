@@ -22,7 +22,7 @@ class snow_data:
 
         # kafka details
         self.kafka_ip = os.environ.get(config_dict['kafka_ip'])
-        self.kafka_port = os.environ.get(config_dict['kafka_port'])
+        self.kafka_port = os.environ.get(config_dict['kafka_port']) 
         self.initial_offset = config_dict['initial_offset']
         self.kafka_data_topic = os.environ.get(config_dict['kafka_data_topic'])
         self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
@@ -174,7 +174,9 @@ class snow_data:
         try:
             # starting the kafka producer
             self.logger.info('Starting the kafka producer')
-            client = KafkaClient(hosts = '{}:{}'.format(self.kafka_ip, self.kafka_port))
+            host = '{}:{}'.format(self.kafka_ip, self.kafka_port)
+            self.logger.info(host)
+            client = KafkaClient(hosts=host)
             data_topic = client.topics[self.kafka_data_topic]
             data_producer = data_topic.get_sync_producer()
 

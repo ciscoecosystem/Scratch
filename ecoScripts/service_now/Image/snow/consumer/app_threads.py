@@ -68,8 +68,9 @@ class ConsumerThread(AuroraThread):
     def __init__(self, exit, lock):
         super(ConsumerThread, self).__init__(exit, lock)
 
-    def get_config(self):
+    def set_config(self):
         # Reading configuration from environment variables
+        self.config = {}
         self.config['tenant'] = os.getenv('TENANT_NAME')
         self.config['application_profile'] = os.getenv('AP_NAME')
         self.config['mongo_host'] = os.getenv('MONGO_HOST')
@@ -79,7 +80,7 @@ class ConsumerThread(AuroraThread):
 
     def run(self):
         self.logger.info("Reading configuration from file")
-        self.config = self.get_config()
+        self.set_config()
 
         try:
             self.logger.info("Connecting to Kafka server")

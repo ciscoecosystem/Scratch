@@ -28,10 +28,14 @@ if os.getenv('ACTION'):
     # time.sleep(0.5) # TODO remove or figure out, giving server time to startup
 
     pigeon.sendInfoMessage("Starting action")
-    if os.environ['ACTION'] == 'TEST_CONNECTIVITY':
-        subprocess.call(["python", "test_connectivity.py"])
+    if os.environ['ACTION'] == 'TEST_SNOW_CONNECTIVITY':
+        subprocess.call(["python", "validate.py", "snow"])
+    elif os.environ['ACTION'] == 'TEST_ACI':
+        subprocess.call(["python", "validate.py", "aci"])
+    elif os.environ['ACTION'] == 'TEST_KAFKA_CONNECTIVITY':
+        subprocess.call(["python", "validate.py", "kafka"])
     elif os.environ['ACTION'] == 'VALIDATE':
-        subprocess.call(["python", "test_connectivity.py"])
+        subprocess.call(["python", "validate.py"])
     elif os.environ['ACTION'] == 'RUN_INTEGRATION':
         subprocess.call(["python", "run_integration.py"])
     elif os.environ['ACTION'] == 'CUSTOM':

@@ -40,7 +40,7 @@ class APIC:
         if protocol != 'https' and protocol != 'http':
             pass # TODO raise error
         else:
-            self.base_url = "{0}://{}".format(protocol, apic_host)
+            self.base_url = "{0}://{1}".format(protocol, apic_host)
 
         self.login_payload = {'aaaUser': {'attributes':{'pwd': aci_pass, 'name': aci_user}}}
 
