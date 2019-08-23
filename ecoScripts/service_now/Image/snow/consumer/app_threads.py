@@ -76,7 +76,7 @@ class ConsumerThread(AuroraThread):
         self.config['mongo_host'] = os.getenv('MONGO_HOST')
         self.config['mongo_port'] = int(os.getenv('MONGO_PORT'))
         self.config['kafka_topic'] = os.getenv('KAFKA_OUTPUT_TOPIC')
-        self.config['kafka_ip'] = os.getenv('KAFKA_IP')
+        self.config['kafka_ip'] = os.getenv('KAFKA_HOSTNAME')
 
     def run(self):
         self.logger.info("Reading configuration from file")
@@ -89,7 +89,6 @@ class ConsumerThread(AuroraThread):
 
             self.logger.info("Connecting to MongoDB")
             self.db = Database(host=self.config['mongo_host'], port=self.config['mongo_port'])
-            self.db.admin.command('ismaster')
             self.logger.info("Successfully connected to MongoDB")
         except (kafka.errors.NoBrokersAvailable, pymongo.errors.ConnectionFailure) as error:
             self.logger.error(str(error))

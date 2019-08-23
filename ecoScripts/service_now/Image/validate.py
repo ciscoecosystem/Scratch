@@ -59,9 +59,7 @@ def test_mongo():
         return True
 
 def validate():
-    return test_mongo() and test_kafka() and test_aci():
-
-
+    return test_mongo() and test_kafka() and test_aci()
 
 if __name__ == "__main__":
     pigeon.sendInfoMessage("In validate.main()")
