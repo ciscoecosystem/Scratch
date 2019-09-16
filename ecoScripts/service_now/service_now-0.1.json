@@ -190,6 +190,35 @@
           "verify": false
         }
       ]
+    },
+	{
+      "name": "flink_connectivity_options",
+      "label": "Flink Connectivity Options",
+      "order": 3,
+      "controls": [
+        {
+          "label": "Test flink Connectivity",
+          "action": "test_flink_connectivity",
+          "message": "Testing Flink Connectivity",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "flink_host",
+          "label": "Flink Host",
+          "type": "text",
+          "environment_variable_name": "Flink_HOSTNAME",
+          "placeholder": "Flink Hostname or IP",
+          "required": true,
+          "order": 1,
+          "verify": false
+        }
+      ]
     }
   ]
 }
