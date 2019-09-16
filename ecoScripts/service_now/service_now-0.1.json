@@ -129,7 +129,17 @@
           "required": true,
           "order": 2,
           "verify": false
-        }
+        },
+       {
+          "name": "kakfa_topic",
+          "label": "Kafka Topic",
+          "type": "text",
+          "environment_variable_name": "KAFKA_TOPIC",
+          "placeholder": "Kafka topic",
+          "required": true,
+          "order": 2,
+          "verify": false
+	}
       ]
     },
 	{
