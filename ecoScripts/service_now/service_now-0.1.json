@@ -131,13 +131,23 @@
           "verify": false
         },
        {
-          "name": "kakfa_topic",
-          "label": "Kafka Topic",
+          "name": "kakfa_in_topic",
+          "label": "Pipeline Input topic",
           "type": "text",
-          "environment_variable_name": "KAFKA_TOPIC",
-          "placeholder": "Kafka topic",
+          "environment_variable_name": "INPUT_TOPIC",
+          "placeholder": "Pipeline Input Topic",
           "required": true,
-          "order": 2,
+          "order": 3,
+          "verify": false
+	},
+	{
+          "name": "kakfa_op_topic",
+          "label": "Pipeline Output topic",
+          "type": "text",
+          "environment_variable_name": "OUTPUT_TOPIC",
+          "placeholder": "Pipeline Output Topic",
+          "required": true,
+          "order": 4,
           "verify": false
 	}
       ]
