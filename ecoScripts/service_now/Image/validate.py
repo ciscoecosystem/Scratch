@@ -73,7 +73,7 @@ def test_flink():
         flinkUrl=flink_ip+':'+flink_port
         pigeon.sendInfoMessage("Testing Flink : "+flinkUrl)
         response = requests.get(flinkUrl)
-        pigeon.sendInfoMessage("response.status_code : " + response.status_code)
+        pigeon.sendInfoMessage("response.status_code : " + str(response.status_code))
         print(response.status_code)
         if response.status_code == 200:
             pigeon.sendInfoMessage("Flink connected successfully")
