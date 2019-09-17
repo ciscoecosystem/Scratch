@@ -8,7 +8,6 @@ import kafka
 from kafka import KafkaConsumer
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
-from flink.plan.Environment import get_environment
 
 from pigeon import Pigeon
 
@@ -26,11 +25,12 @@ def test_aci():
 
 def test_kafka():
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
+    kafka_port=os.getenv('KAFKA_PORT')
     topic = os.getenv('KAFKA_OUTPUT_TOPIC')
 
     try:
         pigeon.sendInfoMessage("Testing Kafka")
-        consumer = KafkaConsumer(topic, bootstrap_servers=kafka_ip)
+        consumer = KafkaConsumer(topic, bootstrap_servers=kafka_ip+':'+kafka_port)
         pigeon.sendInfoMessage("Kafka connected successfully")
     except kafka.errors.NoBrokersAvailable as error:
         pigeon.sendUpdate({
@@ -45,15 +45,16 @@ def test_kafka():
 def test_es():
     es_ip = os.getenv('ES_HOSTNAME')
     port = os.getenv('ES_PORT')
-    print(es_ip)
-    print(port)
     try:
         pigeon.sendInfoMessage("Testing ES")
-        es = Elasticsearch([es_ip], verify_certs=True)
+        es = Elasticsearch(
+            hosts=[{'host': es_ip, 'port': port}],
+            verify_certs=True,
+        )
         if not es.ping():
             raise ValueError("Connection failed")
         else:
-            print('ES connected successfully')
+            pigeon.sendInfoMessage('ES connected successfully')
     except:
         pigeon.sendUpdate({
             'status': 'error',
