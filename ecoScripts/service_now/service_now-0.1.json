@@ -213,9 +213,19 @@
           "label": "Flink Host",
           "type": "text",
           "environment_variable_name": "FLINK_HOSTNAME",
-          "placeholder": "Flink Hostname or IP",
+          "placeholder": "Flink Hostname or IP (including protocol)",
           "required": true,
           "order": 1,
+          "verify": false
+        },
+         {
+          "name": "flink_port",
+          "label": "Flink Port",
+          "type": "text",
+          "environment_variable_name": "FLINK_PORT",
+          "placeholder": "Flink Port",
+          "required": true,
+          "order": 2,
           "verify": false
         }
       ]

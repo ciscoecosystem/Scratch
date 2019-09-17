@@ -4,4 +4,3 @@ pyyaml
 requests
 pymongo
 elasticsearch
-flink

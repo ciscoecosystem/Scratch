@@ -5,6 +5,7 @@ import sys
 
 from elasticsearch import Elasticsearch
 import kafka
+import requests
 from kafka import KafkaConsumer
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
@@ -55,7 +56,7 @@ def test_es():
             raise ValueError("Connection failed")
         else:
             pigeon.sendInfoMessage('ES connected successfully')
-    except:
+    except ValueError:
         pigeon.sendUpdate({
             'status': 'error',
             'message': 'Cannot connect to ES server'
@@ -67,11 +68,16 @@ def test_es():
 
 def test_flink():
     flink_ip = os.getenv('FLINK_HOSTNAME')
+    flink_port = os.getenv('FLINK_PORT')
     try:
         pigeon.sendInfoMessage("Testing Flink")
-        # TODO check flink connectivity
-        pigeon.sendInfoMessage("Flink connected successfully")
-    except:
+        response = requests.get("http://"+flink_ip+":"+flink_port+"'")
+        print(response.status_code)
+        if response.status_code == 200:
+            pigeon.sendInfoMessage("Flink connected successfully")
+        else:
+            raise ValueError("Connection failed")
+    except ValueError:
         pigeon.sendUpdate({
             'status': 'error',
             'message': 'Cannot connect to Flink server'
