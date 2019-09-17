@@ -3,3 +3,4 @@ pykafka
 pyyaml
 requests
 pymongo
+elasticsearch
