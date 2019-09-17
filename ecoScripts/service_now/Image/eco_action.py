@@ -34,6 +34,10 @@ if os.getenv('ACTION'):
         subprocess.call(["python", "validate.py", "aci"])
     elif os.environ['ACTION'] == 'TEST_KAFKA_CONNECTIVITY':
         subprocess.call(["python", "validate.py", "kafka"])
+    elif os.environ['ACTION'] == 'TEST_ES_CONNECTIVITY':
+        subprocess.call(["python", "validate.py", "es"])
+    elif os.environ['ACTION'] == 'TEST_FLINK_CONNECTIVITY':
+        subprocess.call(["python", "validate.py", "flink"])
     elif os.environ['ACTION'] == 'VALIDATE':
         subprocess.call(["python", "validate.py"])
     elif os.environ['ACTION'] == 'RUN_INTEGRATION':
