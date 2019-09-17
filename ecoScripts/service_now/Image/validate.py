@@ -45,7 +45,8 @@ def test_kafka():
 def test_es():
     es_ip = os.getenv('ES_HOSTNAME')
     port = os.getenv('ES_PORT')
-
+    print(es_ip)
+    print(port)
     try:
         pigeon.sendInfoMessage("Testing ES")
         es = Elasticsearch([es_ip], verify_certs=True)
