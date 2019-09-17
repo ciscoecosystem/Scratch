@@ -213,7 +213,7 @@
           "label": "Flink Host",
           "type": "text",
           "environment_variable_name": "FLINK_HOSTNAME",
-          "placeholder": "Flink Hostname or IP (including protocol)",
+          "placeholder": "Flink Hostname or IP",
           "required": true,
           "order": 1,
           "verify": false
