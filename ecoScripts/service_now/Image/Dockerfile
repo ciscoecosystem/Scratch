@@ -21,6 +21,14 @@ RUN yum -y install initscripts
 WORKDIR /app
 ADD . /app
 
+# install java 8
+RUN yum install -y \
+   java-1.8.0-openjdk \
+   java-1.8.0-openjdk-devel
+
+# set JAVA_HOME
+ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk/
+
 # create venv and install pip dependencies
 RUN /opt/rh/rh-python36/root/usr/bin/python -m venv runner
 RUN runner/bin/pip3 install -r requirements.txt
