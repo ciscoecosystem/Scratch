@@ -28,7 +28,6 @@ RUN yum install -y \
 
 # set JAVA_HOME
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk/
-ADD jfxrt.jar /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/ext/
 
 # create venv and install pip dependencies
 RUN /opt/rh/rh-python36/root/usr/bin/python -m venv runner
