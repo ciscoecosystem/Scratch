@@ -1,0 +1,234 @@
+{
+  "version": "0.1",
+  "type": "api",
+  "configurable": true,
+  "schedulable": true,
+  "docker_image": "dockerdipika/aurora",
+  "config_parameters": [
+    {
+      "name": "snow_connection_parameters",
+      "label": "ServiceNow Connection Parameters",
+      "order": 1,
+      "controls": [
+        {
+          "label": "Test ServiceNow Connectivity",
+          "action": "test_snow_connectivity",
+          "message": "Testing ServiceNow Connectivity",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "service_now",
+          "label": "ServiceNow",
+          "type": "text",
+          "environment_variable_name": "SNOW_URL",
+          "required": true,
+          "placeholder": "ServiceNow URL (including protocol)",
+          "order": 1,
+          "verify": false
+        },
+        {
+          "name": "snow_username",
+          "label": "ServiceNow Username",
+          "type": "text",
+          "environment_variable_name": "SNOW_USERNAME",
+          "required": true,
+          "placeholder": "ServiceNow Username",
+          "order": 2,
+          "verify": false
+        },
+        {
+          "name": "snow_password",
+          "label": "ServiceNow Password",
+          "type": "password",
+          "environment_variable_name": "SNOW_PASSWORD",
+          "required": true,
+          "placeholder": "ServiceNow Password",
+          "order": 3,
+          "verify": false
+        }
+      ]
+    },
+    {
+      "name": "aci_parameters",
+      "label": "ACI Parameters",
+      "order": 1,
+      "controls": [
+        {
+          "label": "Test ACI",
+          "action": "test_aci",
+          "message": "Testing ACI",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "tenant_name",
+          "label": "Tenant Name",
+          "type": "text",
+          "environment_variable_name": "TENANT_NAME",
+          "placeholder": "Tenant Name",
+          "required": true,
+          "order": 1,
+          "verify": false
+        },
+        {
+          "name": "ap_name",
+          "label": "Application Profile Name",
+          "type": "text",
+          "environment_variable_name": "AP_NAME",
+          "placeholder": "Application Profile Name",
+          "required": true,
+          "order": 2,
+          "verify": false
+        }
+      ]
+    },
+    {
+      "name": "kafka_connectivity_options",
+      "label": "Kafka Connectivity Options",
+      "order": 3,
+      "controls": [
+        {
+          "label": "Test Kafka Connectivity",
+          "action": "test_kafka_connectivity",
+          "message": "Testing Kafka Connectivity",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "kakfa_host",
+          "label": "Kafka Host",
+          "type": "text",
+          "environment_variable_name": "KAFKA_HOSTNAME",
+          "placeholder": "Kafka Hostname or IP",
+          "required": true,
+          "order": 1,
+          "verify": false
+        },
+        {
+          "name": "kakfa_port",
+          "label": "Kafka Port",
+          "type": "text",
+          "environment_variable_name": "KAFKA_PORT",
+          "placeholder": "Kafka port",
+          "required": true,
+          "order": 2,
+          "verify": false
+        },
+       {
+          "name": "kakfa_in_topic",
+          "label": "Pipeline Input topic",
+          "type": "text",
+          "environment_variable_name": "KAFKA_INPUT_TOPIC",
+          "placeholder": "Pipeline Input Topic",
+          "required": true,
+          "order": 3,
+          "verify": false
+	},
+	{
+          "name": "kakfa_op_topic",
+          "label": "Pipeline Output topic",
+          "type": "text",
+          "environment_variable_name": "KAFKA_OUTPUT_TOPIC",
+          "placeholder": "Pipeline Output Topic",
+          "required": true,
+          "order": 4,
+          "verify": false
+	}
+      ]
+    },
+	{
+      "name": "es_connectivity_options",
+      "label": "Elasticsearch Connectivity Options",
+      "order": 3,
+      "controls": [
+        {
+          "label": "Test es Connectivity",
+          "action": "test_es_connectivity",
+          "message": "Testing ES Connectivity",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "es_host",
+          "label": "Es Host",
+          "type": "text",
+          "environment_variable_name": "ES_HOSTNAME",
+          "placeholder": "ES Hostname or IP",
+          "required": true,
+          "order": 1,
+          "verify": false
+        },
+        {
+          "name": "es_port",
+          "label": "Es Port",
+          "type": "text",
+          "environment_variable_name": "ES_PORT",
+          "placeholder": "Es port",
+          "required": true,
+          "order": 2,
+          "verify": false
+        }
+      ]
+    },
+	{
+      "name": "flink_connectivity_options",
+      "label": "Flink Connectivity Options",
+      "order": 3,
+      "controls": [
+        {
+          "label": "Test flink Connectivity",
+          "action": "test_flink_connectivity",
+          "message": "Testing Flink Connectivity",
+          "type": "icon",
+          "icon": {
+            "group": "action",
+            "name": "assessment"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "flink_host",
+          "label": "Flink Host",
+          "type": "text",
+          "environment_variable_name": "FLINK_HOSTNAME",
+          "placeholder": "Flink Hostname or IP",
+          "required": true,
+          "order": 1,
+          "verify": false
+        },
+         {
+          "name": "flink_port",
+          "label": "Flink Port",
+          "type": "text",
+          "environment_variable_name": "FLINK_PORT",
+          "placeholder": "Flink Port",
+          "required": true,
+          "order": 2,
+          "verify": false
+        }
+      ]
+    }
+  ]
+}
