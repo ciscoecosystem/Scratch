@@ -12,5 +12,19 @@
     "required_targets": [
       "aci"
     ]
+  },
+  {
+    "name": "service_now_cmdb",
+    "label": "ServiceNow_CMDB_Tagging",
+    "versions": [
+      "0.1"
+    ],
+    "latest": "0.1",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration/ecoScripts/service_now_cmdb_tag",
+    "icon": "icon.png",
+    "tags": "user",
+    "required_targets": [
+      "aci"
+    ]
   }
 ]
