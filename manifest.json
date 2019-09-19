@@ -14,7 +14,7 @@
     ]
   },
   {
-    "name": "service_now_cmdb",
+    "name": "service_now_cmdb_tag",
     "label": "ServiceNow_CMDB_Tagging",
     "versions": [
       "0.1"
