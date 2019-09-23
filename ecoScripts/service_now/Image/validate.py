@@ -122,6 +122,9 @@ def test_kafka():
     inp_topic = os.getenv('KAFKA_INPUT_TOPIC')
     out_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
 
+    os.putenv("KAFKA_OFFSET_TOPIC", "snow_offset")
+    offset_topic = os.getenv("KAFKA_OFFSET_TOPIC")
+
     try:
         host = '{}:{}'.format(kafka_ip, kafka_port)
         client = KafkaAdminClient(bootstrap_servers=host)
@@ -131,7 +134,7 @@ def test_kafka():
         pigeon.sendInfoMessage("Testing Kafka Input/Output topic")
 
         broker_topics = simple_client.topic_partitions
-        data_topics = [inp_topic, out_topic]
+        data_topics = [inp_topic, out_topic, offset_topic]
 
         for curr_topic in data_topics:
             if curr_topic and curr_topic not in broker_topics:
