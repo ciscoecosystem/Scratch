@@ -2,14 +2,11 @@ import os
 import sys
 import time
 import json
-# import queue
+import yaml
+import requests
 from pykafka import KafkaClient
 from pykafka.common import OffsetType
 from datetime import datetime, timedelta, timezone
-
-import yaml
-import requests
-# from bs4 import BeautifulSoup
 
 from ..logger import Logger
 from .exception_handler import handle_exception
@@ -21,7 +18,7 @@ class snow_data:
         self.logger = Logger.get_logger()
 
         # kafka details
-        self.kafka_ip = os.environ.get(config_dict['kafka_ip'])
+        self.kafka_hostname = os.environ.get(config_dict['kafka_hostname'])
         self.kafka_port = os.environ.get(config_dict['kafka_port']) 
         self.initial_offset = config_dict['initial_offset']
         self.kafka_data_topic = os.environ.get(config_dict['kafka_data_topic'])
@@ -29,14 +26,17 @@ class snow_data:
         self.restart_from_offset = config_dict['restart_from_offset']
 
         # SNOW configs
-        self.snow_url = os.getenv('SNOW_URL') # config_dict['snow_url']
-        self.snow_username = os.getenv('SNOW_USERNAME') # config_dict['snow_username']
-        self.snow_password = os.getenv('SNOW_PASSWORD') # config_dict['snow_password']
+        self.snow_url = os.environ.get(config_dict['snow_url'])
+        self.snow_username = os.environ.get(config_dict['snow_username'])
+        self.snow_password = os.environ.get(config_dict['snow_password'])
         self.source_instance = config_dict['source_instance']
         self.discovery_source = config_dict['discovery_source']
 
         # polling interval
         self.polling_interval = config_dict['polling_interval']
+
+        # max_request_size
+        self.max_request_size = config_dict['max_request_size']
 
         # SNOW tables
         self.parent_table = config_dict['parent_table']
@@ -174,7 +174,7 @@ class snow_data:
         try:
             # starting the kafka producer
             self.logger.info('Starting the kafka producer')
-            host = '{}:{}'.format(self.kafka_ip, self.kafka_port)
+            host = '{}:{}'.format(self.kafka_hostname, self.kafka_port)
             self.logger.info(host)
             client = KafkaClient(hosts=host)
             data_topic = client.topics[self.kafka_data_topic]

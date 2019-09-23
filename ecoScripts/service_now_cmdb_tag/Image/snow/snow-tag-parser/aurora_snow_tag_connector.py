@@ -2,50 +2,51 @@ import os
 import sys
 import time
 import json
-# import queue
+import yaml
+import requests
 from pykafka import KafkaClient
 from pykafka.common import OffsetType
 from datetime import datetime, timedelta, timezone
 
-import yaml
-import requests
-# from bs4 import BeautifulSoup
-
 from ..logger import Logger
 from .exception_handler import handle_exception
 
-class snow_data:
+class tag_data:
     @handle_exception
     def __init__(self):
         config_dict = self.load_config()
         self.logger = Logger.get_logger()
-
+        
         # kafka details
-        self.kafka_ip = os.environ.get(config_dict['kafka_ip'])
-        self.kafka_port = os.environ.get(config_dict['kafka_port']) 
+        self.kafka_hostname = os.environ.get(config_dict['kafka_hostname'])
+        self.kafka_port = os.environ.get(config_dict['kafka_port'])
         self.initial_offset = config_dict['initial_offset']
         self.kafka_data_topic = os.environ.get(config_dict['kafka_data_topic'])
         self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
         self.restart_from_offset = config_dict['restart_from_offset']
-
+        
         # SNOW configs
-        self.snow_url = os.getenv('SNOW_URL') # config_dict['snow_url']
-        self.snow_username = os.getenv('SNOW_USERNAME') # config_dict['snow_username']
-        self.snow_password = os.getenv('SNOW_PASSWORD') # config_dict['snow_password']
+        self.snow_url = os.environ.get(config_dict['snow_url'])
+        self.snow_username = os.environ.get(config_dict['snow_username'])
+        self.snow_password = os.environ.get(config_dict['snow_password'])
         self.source_instance = config_dict['source_instance']
         self.discovery_source = config_dict['discovery_source']
 
         # polling interval
         self.polling_interval = config_dict['polling_interval']
 
+        # max_request_size
+        self.max_request_size = config_dict['max_request_size']
+        
         # SNOW tables
+        self.os_table = config_dict['os_table']
         self.parent_table = config_dict['parent_table']
         self.child_tables = config_dict['child_tables']
         self.delete_table = config_dict['delete_table']
         self.relationship_table = config_dict['relationship_table']
         self.relationship_type_table = config_dict['relationship_type_table']
 
-
+    
     @handle_exception
     def load_config(self):
         """
@@ -55,7 +56,7 @@ class snow_data:
         with open(filename, 'r') as stream:
             return yaml.safe_load(stream)
 
-
+    
     @handle_exception
     def get_checkpoint(self, client):
         """
@@ -71,7 +72,7 @@ class snow_data:
         offset_consumer.reset_offsets(offsets)
         return offset_consumer.consume().value.decode('utf-8')
 
-
+    
     @handle_exception
     def write_checkpoint(self, client, current_query_time):
         """
@@ -82,7 +83,7 @@ class snow_data:
         current_query_time = str(current_query_time)
         offset_producer.produce(str.encode(current_query_time))
 
-
+    
     @handle_exception
     def read_data(self, table, query):
         """
@@ -93,7 +94,7 @@ class snow_data:
         self.logger.debug('Response of read data from table {}: {}'.format(table, response.text))
         return response.json()
 
-
+    
     @handle_exception
     def filter_table_data(self, response, query):
         """
@@ -106,14 +107,14 @@ class snow_data:
         filtered_response['result']= []
         for result in response['result']:
             table_name = result['sys_class_name']
-            # TODO: Replace ```table_name == 'cmdb_ci_vmware_instance'``` with ```table_name in self.child_tables``` in below if condition
-            if table_name == 'cmdb_ci_vmware_instance' and table_name not in mark_table:
+            # TODO: Replace ```table_name == 'cmdb_ci_vcenter_datacenter'``` with ```table_name in self.child_tables``` in below if condition
+            if table_name == 'cmdb_ci_vcenter_datacenter' and table_name not in mark_table:
                 table_response = self.read_data(table_name, query)
                 filtered_response['result'] += table_response['result']
                 mark_table.append(table_name)
         return filtered_response
 
-
+    
     @handle_exception
     def form_query(self, time_filter):
         """
@@ -126,7 +127,7 @@ class snow_data:
             query = '{}^ORtablename={}'.format(query, table)
         return query
 
-
+    
     @handle_exception
     def create_ci_info(self, response, category):
         """
@@ -138,7 +139,7 @@ class snow_data:
         response['category'] = category
         return response
 
-
+    
     @handle_exception
     def write_data(self, producer, write_data):
         """
@@ -148,7 +149,7 @@ class snow_data:
         value = value.encode('utf-8')
         producer.produce(value)
 
-
+    
     @handle_exception
     def query_tables(self, tablename, last_query_time, current_query_time, query, to_filter, category, data_producer):
         """
@@ -174,11 +175,9 @@ class snow_data:
         try:
             # starting the kafka producer
             self.logger.info('Starting the kafka producer')
-            host = '{}:{}'.format(self.kafka_ip, self.kafka_port)
-            self.logger.info(host)
-            client = KafkaClient(hosts=host)
+            client = KafkaClient(hosts = '{}:{}'.format(self.kafka_hostname, self.kafka_port))
             data_topic = client.topics[self.kafka_data_topic]
-            data_producer = data_topic.get_sync_producer()
+            data_producer = data_topic.get_sync_producer(max_request_size=self.max_request_size)
 
             if self.restart_from_offset:
                 self.write_checkpoint(client, self.initial_offset)
@@ -194,13 +193,17 @@ class snow_data:
             self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep', data_producer)
             time.sleep(1)
 
+            query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time)
+            self.query_tables(self.os_table, last_query_time, current_query_time, query, False, 'os', data_producer)
+            time.sleep(1)
+
             # TODO: add read query in below line
             query = ''
             self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False, 'reltype', data_producer)
             time.sleep(1)
 
-            # TODO: remove type.sys_id filter from the below query
-            query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(last_query_time, current_query_time)
+            # TODO: remove type.sys_id (it's the sys_id of the relationship) filter from the below query
+            query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=60bc4e22c0a8010e01f074cbe6bd73c3'.format(last_query_time, current_query_time)
             self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel', data_producer)
             time.sleep(1)
 
@@ -216,16 +219,16 @@ class snow_data:
                 #     if variable != 'y':
                 #         continue
                 #     break
-
+                
                 # self.logger.info('Starting the timer')
                 # self.start_timer()
                 # self.logger.info('Timer over\n')
         except Exception as e:
             self.logger.error(e)
-            self.logger.error('Exiting snow')
+            self.logger.error('Exiting code')
             sys.exit()
-
+            
 
 if __name__ == '__main__':
-    sd = snow_data()
-    sd.main()
+    td = tag_data()
+    td.main()
