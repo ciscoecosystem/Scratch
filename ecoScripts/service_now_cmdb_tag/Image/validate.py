@@ -119,11 +119,11 @@ def test_aci():
 def test_kafka():
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
-    inp_topic = os.getenv('KAFKA_INPUT_TOPIC')
-    out_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
+    inp_topic = os.getenv('TAG_INPUT_TOPIC')
+    out_topic = os.getenv('TAG_OUTPUT_TOPIC')
 
-    os.putenv("KAFKA_OFFSET_TOPIC", "snow_offset")
-    offset_topic = os.getenv("KAFKA_OFFSET_TOPIC")
+    os.putenv("TAG_OFFSET_TOPIC", "tag_offset")
+    offset_topic = os.getenv("TAG_OFFSET_TOPIC")
 
     try:
         host = '{}:{}'.format(kafka_ip, kafka_port)
