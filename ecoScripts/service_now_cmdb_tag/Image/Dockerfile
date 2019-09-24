@@ -43,7 +43,7 @@ ENV MONGO_PORT=27017
 #ENV KAFKA_PORT=9092
 #ENV KAFKA_INPUT_TOPIC=pipeline_input
 #ENV KAFKA_OUTPUT_TOPIC=pipeline_output
-ENV KAFKA_OFFSET_TOPIC=snow_offset
+ENV TAG_OFFSET_TOPIC=tag_offset
 
 # local testing environment variables
 ENV CONN="python -m snow.snow-tag-parser.aurora_snow_connector"
