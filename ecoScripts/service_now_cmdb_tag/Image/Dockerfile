@@ -46,7 +46,7 @@ ENV MONGO_PORT=27017
 ENV KAFKA_OFFSET_TOPIC=snow_offset
 
 # local testing environment variables
-ENV CONN="python -m snow.snow-table-parser.aurora_snow_connector"
+ENV CONN="python -m snow.snow-tag-parser.aurora_snow_connector"
 ENV CONS="python -m snow.app.app"
 
 # run the eco_action script using venv on launch
