@@ -122,7 +122,6 @@ def test_kafka():
     inp_topic = os.getenv('KAFKA_INPUT_TOPIC')
     out_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
 
-    os.putenv("KAFKA_OFFSET_TOPIC", "snow_offset")
     offset_topic = os.getenv("KAFKA_OFFSET_TOPIC")
 
     try:
@@ -137,12 +136,16 @@ def test_kafka():
         data_topics = [inp_topic, out_topic, offset_topic]
 
         for curr_topic in data_topics:
-            if curr_topic and curr_topic not in broker_topics:
-                create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
-                client.create_topics(create_topics)
-                pigeon.sendInfoMessage("Topics created")
+            if curr_topic:
+                if curr_topic not in broker_topics:
+                    create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
+                    client.create_topics(create_topics)
+                    pigeon.sendInfoMessage("Topics created")
+                else:
+                    pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
             else:
-                pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
+                pigeon.sendInfoMessage("Topic does not exist:")
+
         client.close()
         simple_client.close()
 
