@@ -191,7 +191,7 @@ class ConsumerThread(AuroraThread):
         """
         try:
             payload = self.generate_tag_payload(dn, tag_key, tag_value)
-            url = 'api/node/mo/{}.json'.format(dn)
+            url = '/api/node/mo/{}.json'.format(dn)
             res = self.apic.request("POST", url, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
             if res.status_code == 200:
                 self.logger.debug('Response of creating tag in ACI - {}'.format(res.text))
