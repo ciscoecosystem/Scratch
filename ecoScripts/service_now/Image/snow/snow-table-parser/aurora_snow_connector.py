@@ -184,42 +184,42 @@ class snow_data:
                 self.write_checkpoint(client, self.initial_offset)
                 self.write_checkpoint(client, self.initial_offset)
 
-            # while True:
-            # get the last query time and write current query time in the kafka topic
-            last_query_time = self.get_checkpoint(client)
-            current_query_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-            self.write_checkpoint(client, current_query_time)
+            while True:
+                # get the last query time and write current query time in the kafka topic
+                last_query_time = self.get_checkpoint(client)
+                current_query_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+                self.write_checkpoint(client, current_query_time)
 
-            query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time)
-            self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep', data_producer)
-            time.sleep(1)
+                query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time)
+                self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep', data_producer)
+                time.sleep(1)
 
-            # TODO: add read query in below line
-            query = ''
-            self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False, 'reltype', data_producer)
-            time.sleep(1)
+                # TODO: add read query in below line
+                query = ''
+                self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False, 'reltype', data_producer)
+                time.sleep(1)
 
-            # TODO: remove type.sys_id filter from the below query
-            query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(last_query_time, current_query_time)
-            self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel', data_producer)
-            time.sleep(1)
+                # TODO: remove type.sys_id filter from the below query
+                query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(last_query_time, current_query_time)
+                self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel', data_producer)
+                time.sleep(1)
 
-            if str(last_query_time) != str(self.initial_offset):
-                query = self.form_query('sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time))
-                self.query_tables(self.delete_table, last_query_time, current_query_time, query, False, 'delete', data_producer)
+                if str(last_query_time) != str(self.initial_offset):
+                    query = self.form_query('sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time))
+                    self.query_tables(self.delete_table, last_query_time, current_query_time, query, False, 'delete', data_producer)
 
-                # while True:
-                #     variable = input('Make the changes on the SNOW. Press y\n')
-                #     if variable != 'y':
-                #         continue
-                #     variable = input('Are you sure? Press y\n')
-                #     if variable != 'y':
-                #         continue
-                #     break
+                    # while True:
+                    #     variable = input('Make the changes on the SNOW. Press y\n')
+                    #     if variable != 'y':
+                    #         continue
+                    #     variable = input('Are you sure? Press y\n')
+                    #     if variable != 'y':
+                    #         continue
+                    #     break
 
-                # self.logger.info('Starting the timer')
-                # self.start_timer()
-                # self.logger.info('Timer over\n')
+                    self.logger.info('Starting the timer')
+                    self.start_timer()
+                    self.logger.info('Timer over\n')
         except Exception as e:
             self.logger.error(e)
             self.logger.error('Exiting snow')
