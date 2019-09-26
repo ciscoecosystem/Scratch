@@ -17,11 +17,11 @@ class Logger:
     @staticmethod
     def __get_logger():
         logger = logging.getLogger(__name__)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
 
         # Logging to stdout for ecohub
         handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG) # TODO change to info?
+        handler.setLevel(logging.INFO) # TODO change to info?
         logger.addHandler(handler)
         formatter = PigeonFormatter()
         handler.setFormatter(formatter)

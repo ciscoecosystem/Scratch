@@ -104,7 +104,7 @@ class ConsumerThread(AuroraThread):
             msg_pack = self.consumer.poll()
             for tp, messages in msg_pack.items():
                 for msg in messages:
-                    self.logger.debug("Received message from Kafka")
+                    self.logger.info("Received message from Kafka")
                     self.process_message(msg)
                     if self.exit.is_set():
                         break
@@ -140,7 +140,7 @@ class ConsumerThread(AuroraThread):
         del props['msg_type']
         
         if msg_type == 'os_tag':
-            self.logger.debug("Received os tag message")
+            self.logger.info("Received os tag message")
             self.process_tag_message(props)
         else:
             self.logger.error("Received invalid message type")
@@ -151,6 +151,7 @@ class ConsumerThread(AuroraThread):
             mac_address = props['mac_address']
             ip_address = props['ip_address']
             os = props['os']
+            source = props['discovery_source']
 
             self.logger.info('Finding the respective instance which has same ip and mac as {}, {}'.format(ip_address, mac_address))
             self.logger.info('Extracting dn of the instance')
@@ -164,6 +165,10 @@ class ConsumerThread(AuroraThread):
                     self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
                     os = os.replace(' ', '_')
                     self.create_tag(dn, 'os', os)
+                if source != '':
+                    self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
+                    os = os.replace(' ', '_')
+                    self.create_tag(dn, 'source', source)
         except Exception as e:
             self.logger.error('Error', e)
 
@@ -176,11 +181,14 @@ class ConsumerThread(AuroraThread):
             query = 'query-target-filter=and(eq(fvCEp.ip,\"{}\"), eq(fvCEp.mac,\"{}\"))'.format(ip_address, mac_address)
             url = '/api/class/fvCEp.json?{}'.format(query)
             res = self.apic.request("GET", url)
-            self.logger.debug('Response of extracting dn - {}'.format(res.text))
+            if res.status_code == 200:
+                self.logger.info('Request successful for getting cep for ip_address - {}, mac_address - {}'.format(ip_address, mac_address))
+            # self.logger.debug('Response of extracting dn - {}'.format(res.text))
             instances = res.json()
             if len(instances['imdata']) > 0:
                 instance = instances['imdata'][0]
                 dn = instance['fvCEp']['attributes']['dn']
+                self.logger.info('dn - {}'.format(dn))
         except Exception as e:
             self.logger.error('Error', e)
         return dn
@@ -194,7 +202,8 @@ class ConsumerThread(AuroraThread):
             url = '/api/node/mo/{}.json'.format(dn)
             res = self.apic.request("POST", url, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
             if res.status_code == 200:
-                self.logger.debug('Response of creating tag in ACI - {}'.format(res.text))
+                self.logger.info('Request successful for creating tags for dn - {}'.format(dn))
+                # self.logger.debug('Response of creating tag in ACI - {}'.format(res.text))
         except Exception as e:
             self.logger.error('Error', e)
 

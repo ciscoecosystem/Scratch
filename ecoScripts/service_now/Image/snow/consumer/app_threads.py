@@ -104,7 +104,7 @@ class ConsumerThread(AuroraThread):
             msg_pack = self.consumer.poll()
             for tp, messages in msg_pack.items():
                 for msg in messages:
-                    self.logger.debug("Received message from Kafka")
+                    self.logger.info("Received message from Kafka")
                     self.process_message(msg)
                     if self.exit.is_set():
                         break
@@ -125,13 +125,13 @@ class ConsumerThread(AuroraThread):
         del props['uuid'], props['status'], props['msg_type']
 
         if msg_type == 'ep':
-            self.logger.debug("Received endpoint message")
+            self.logger.info("Received endpoint message")
             self.process_endpoint_message(props, status)
         elif msg_type == 'epg':
-            self.logger.debug("Received grouping message")
+            self.logger.info("Received grouping message")
             self.process_grouping_message(props, status)
         elif msg_type == 'contract':
-            self.logger.debug("Received contract message")
+            self.logger.info("Received contract message")
             self.process_contract_message(props, status)
         else:
             self.logger.error("Received invalid message type")
@@ -143,16 +143,16 @@ class ConsumerThread(AuroraThread):
             endpoint = self.db.get_endpoint(props['_id'])
             if not endpoint:
                 self.db.insert_endpoint(props)
-                self.logger.debug("Added endpoint {} to DB".format(props['name']))
+                self.logger.info("Added endpoint {} to DB".format(props['name']))
             else:
                 self.db.update_endpoint(props['_id'], {'$set': props})
-                self.logger.debug("Updated endpoint {}".format(props['name']))
+                self.logger.info("Updated endpoint {}".format(props['name']))
         elif status == 'delete':
             endpoint = self.db.get_endpoint(props['_id'])
             self.db.delete_endpoint(props['_id'])
-            self.logger.debug("Deleted endpoint {}".format(props['name']))
+            self.logger.info("Deleted endpoint {}".format(props['name']))
             self.db.update_epg_membership(endpoint['epg'], [props['_id']], remove=True)
-            self.logger.debug("Removed endpoint {} from EPG {} in DB".format(props['name'], endpoint['epg']))
+            self.logger.info("Removed endpoint {} from EPG {} in DB".format(props['name'], endpoint['epg']))
         else:
             pass # TODO possibly error handle if msg is bad?
 
@@ -174,11 +174,11 @@ class ConsumerThread(AuroraThread):
 
             if not epg: # no previous state; creation of new EPG
                 self.create_epg(tenant, ap, props['name'])
-                self.logger.debug("Created EPG {} on APIC".format(props['name']))
+                self.logger.info("Created EPG {} on APIC".format(props['name']))
                 props['consumed'] = []
                 props['provided'] = []
                 self.db.insert_epg(props)
-                self.logger.debug("Added endpoint {} to DB".format(props['name']))
+                self.logger.info("Added endpoint {} to DB".format(props['name']))
             else: # update existing EPG
 
                 # TODO change EPG setting on APIC if applicable
@@ -192,23 +192,23 @@ class ConsumerThread(AuroraThread):
                 prev = set(epg['members'])
                 update = set(props['members'])
                 if prev != update:
-                    self.logger.debug("Updating {} membership".format(props['name']))
+                    self.logger.info("Updating {} membership".format(props['name']))
                     removed = prev - update
                     added = update - prev
                     self.db.update_epg_membership(props['_id'], props['members'])
-                    self.logger.debug("Updated EPG {} in DB".format(props['name']))
+                    self.logger.info("Updated EPG {} in DB".format(props['name']))
 
                     # TODO update endpoints on APIC, using `removed` and `added`
                     for id in removed:
                         self.db.update_endpoint(id, {'$set': {'epg': ''}})
-                        self.logger.debug("Removed grouping for endpoint {}".format(id))
+                        self.logger.info("Removed grouping for endpoint {}".format(id))
                     for id in added:
                         endpoint = self.db.get_endpoint(id)
                         if endpoint['epg'] != props['_id']: # disassociate EP from previous EPG
                             self.db.update_epg_membership(endpoint['epg'], [id], remove=True)
-                            self.logger.debug("Removed {} from EPG {}".format(id, endpoint['epg']))
+                            self.logger.info("Removed {} from EPG {}".format(id, endpoint['epg']))
                             self.db.update_endpoint(id, {'$set': {'epg': props['_id']}})
-                        self.logger.debug("Updated grouping for endpoint {}".format(id))
+                        self.logger.info("Updated grouping for endpoint {}".format(id))
 
         elif status == 'delete':
             self.create_epg(tenant, ap, props['name'], delete=True)
@@ -219,15 +219,15 @@ class ConsumerThread(AuroraThread):
                 self.db.update_contract_membership(contract, 'consumed', [props['id']], remove=True)
             for contract in epg['provided']:
                 self.db.update_contract_membership(contract, 'provided', [props['id']], remove=True)
-            self.logger.debug("Removed contracts from EPG {}".format(props['name']))
+            self.logger.info("Removed contracts from EPG {}".format(props['name']))
 
             # TODO possibly modify endpoint entries in DB
             for ep in epg['members']:
                 self.db.update_endpoint(ep, {'$set': {'epg': ''}})
-            self.logger.debug('Updated endpoint grouping entries in DB')
+            self.logger.info('Updated endpoint grouping entries in DB')
 
             self.db.delete_epg(props['_id'])
-            self.logger.debug("Deleted endpoint {} in DB".format(props['name']))
+            self.logger.info("Deleted endpoint {} in DB".format(props['name']))
         else:
             pass # TODO possibly error handle if msg is bad
 
@@ -295,7 +295,7 @@ class ConsumerThread(AuroraThread):
                 # update consumer/provider
                 self.db.update_contract_membership(props['_id'], 'consumed', props['consumer_epg'])
                 self.db.update_contract_membership(props['_id'], 'provided', props['provider_epg'])
-                self.logger.debug("Determining contract cons/prov updates")
+                self.logger.info("Determining contract cons/prov updates")
                 prev_cons = set(contract['consumer_epg'])
                 update_cons = set(props['consumer_epg'])
                 added_cons = list(update_cons - prev_cons)
@@ -369,7 +369,7 @@ class ConsumerThread(AuroraThread):
 
         debug_action = 'Setting' if status == 'created,modified' else 'Deleting'
         role_log = 'consumer' if role == 'consumed' else 'provider'
-        self.logger.debug("{} EPG '{}' as {} for contract '{}' on APIC".format(debug_action, epg, role_log, contract))
+        self.logger.info("{} EPG '{}' as {} for contract '{}' on APIC".format(debug_action, epg, role_log, contract))
 
         url = "/api/node/mo/uni/tn-{}/ap-{}/epg-{}.json".format(tenant, ap, epg)
         payload = {
@@ -382,7 +382,7 @@ class ConsumerThread(AuroraThread):
         }
         res = self.apic.request("POST", url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.debug("Successfully processed contract '{}' for EPG '{}'".format(contract, epg))
+            self.logger.info("Successfully processed contract '{}' for EPG '{}'".format(contract, epg))
 
 
     def create_epg(self, tenant, ap, epg, status='created,modified', delete=False):
@@ -400,7 +400,7 @@ class ConsumerThread(AuroraThread):
 
         status = 'deleted' if delete else 'created,modified'
         debug_action = 'Creating' if status == 'created,modified' else 'Deleting'
-        self.logger.debug("{} EPG '{}' on APIC".format(debug_action, epg))
+        self.logger.info("{} EPG '{}' on APIC".format(debug_action, epg))
 
         url = "/api/node/mo/uni/tn-{}/ap-{}/epg-{}.json".format(tenant, ap, epg)
         # self.logger.debug("Creating EPG: {}".format(epg))
@@ -414,7 +414,7 @@ class ConsumerThread(AuroraThread):
         }
         res = self.apic.request("POST", url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.debug("Successfully processed EPG '{}'".format(epg))
+            self.logger.info("Successfully processed EPG '{}'".format(epg))
 
     def create_contract(self, tenant, contract, filter, action, status='created,modified', delete=False):
         """Make a contract
@@ -430,7 +430,7 @@ class ConsumerThread(AuroraThread):
         assert status == 'created,modified' or 'deleted'
         status = 'deleted' if delete else 'created,modified'
         debug_action = 'Creating' if status == 'created,modified' else 'Deleting'
-        self.logger.debug("{} contract '{}' on APIC".format(debug_action, contract))
+        self.logger.info("{} contract '{}' on APIC".format(debug_action, contract))
 
         url = "/api/node/mo/uni/tn-{0}/brc-{1}.json".format(tenant, contract)
 
@@ -469,11 +469,11 @@ class ConsumerThread(AuroraThread):
 
         res = self.apic.request('POST', url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.debug("Successfully processed contract '{}'".format(contract))
+            self.logger.info("Successfully processed contract '{}'".format(contract))
 
     def change_contract_filter(self, tenant, contract, new_filter, old_filter, action):
         url = "/api/node/mo/uni/tn-{0}/brc-{1}/subj-contract-subject.json".format(tenant, contract)
-        self.logger.debug("Changing filter for contract {}".format(contract))
+        self.logger.info("Changing filter for contract {}".format(contract))
 
         payload = {
             "vzSubj": {
@@ -508,7 +508,7 @@ class ConsumerThread(AuroraThread):
 
         res = self.apic.request('POST', url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.debug("Successfully updated filter for contract '{}'".format(contract))
+            self.logger.info("Successfully updated filter for contract '{}'".format(contract))
 
     def create_filter(self, tenant, filter, ports, status='created,modified', delete=False):
         """Make a filter
@@ -526,7 +526,7 @@ class ConsumerThread(AuroraThread):
         status = 'deleted' if delete else 'created,modified'
 
         debug_action = 'Creating' if status == 'created,modified' else 'Deleting'
-        self.logger.debug("{} filter '{}' on APIC".format(debug_action, filter))
+        self.logger.info("{} filter '{}' on APIC".format(debug_action, filter))
 
         def entry_payload(port):
             payloads = (
@@ -584,4 +584,4 @@ class ConsumerThread(AuroraThread):
         }
         res = self.apic.request('POST', url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.debug("Successfully processed filter '{}'".format(filter))
+            self.logger.info("Successfully processed filter '{}'".format(filter))
