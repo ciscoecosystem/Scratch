@@ -90,8 +90,9 @@ class snow_data:
         """
         query_url = '{}/api/now/table/{}?{}'.format(self.snow_url, table, query)
         response = requests.get(query_url, auth=(self.snow_username, self.snow_password))
-        self.logger.debug('Response of read data from table {}: {}'.format(table, response.text))
-        return response.json()
+        response = response.json()
+        self.logger.info('Length of response of read data from table {}, length: {}'.format(table, len(response['result'])))
+        return response
 
 
     @handle_exception
