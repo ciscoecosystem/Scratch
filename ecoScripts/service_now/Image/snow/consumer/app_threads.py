@@ -172,7 +172,12 @@ class ConsumerThread(AuroraThread):
             except KeyError as error:
                 self.logger.warning("EPG created before member EPs")
 
-            if not epg: # no previous state; creation of new EPG
+            if not epg:  # no previous state; creation of new EPG
+                epg_count = self.db.count_epgs()
+                epg_count = epg_count + 1
+                epg_name = "EPG_" + str(epg_count)
+                props['name'] = epg_name
+
                 self.create_epg(tenant, ap, props['name'])
                 self.logger.info("Created EPG {} on APIC".format(props['name']))
                 props['consumed'] = []
@@ -189,6 +194,7 @@ class ConsumerThread(AuroraThread):
 
                 # update membership in database
                 # TODO update config on APIC, currently app has no concept of EPs on APIC
+                props['name'] = epg['name']
                 prev = set(epg['members'])
                 update = set(props['members'])
                 if prev != update:
@@ -211,10 +217,11 @@ class ConsumerThread(AuroraThread):
                         self.logger.info("Updated grouping for endpoint {}".format(id))
 
         elif status == 'delete':
-            self.create_epg(tenant, ap, props['name'], delete=True)
-
+            # self.create_epg(tenant, ap, props['name'], delete=True)
             # remove EPG from related contract DB entries
             epg = self.db.get_epg(props['_id'])
+            props['name'] = epg['name']
+            self.create_epg(tenant, ap, epg['name'], delete=True)
             for contract in epg['consumed']:
                 self.db.update_contract_membership(contract, 'consumed', [props['id']], remove=True)
             for contract in epg['provided']:
@@ -264,8 +271,14 @@ class ConsumerThread(AuroraThread):
 
             # REVIEW temporary solution as currently cons/prov are not lists but str for single EPG
             # currently processing with lists, easier to expand later
-            props['consumer_epg'] = [props['consumer_epg']]
-            props['provider_epg'] = [props['provider_epg']]
+            #props['consumer_epg'] = [props['consumer_epg']]
+            #props['provider_epg'] = [props['provider_epg']]
+
+            consumer_epg_name = self.db.get_epg(props['consumer_epg'])
+            provider_epg_name = self.db.get_epg(props['provider_epg'])
+
+            props['consumer_epg'] = [consumer_epg_name['name']]
+            props['provider_epg'] = [provider_epg_name['name']]
             ####
 
             # create new contract with above filter
@@ -276,6 +289,11 @@ class ConsumerThread(AuroraThread):
             # `props` represents new to be updated entry
             contract = self.db.get_contract(props['_id'], identifier='id')
             if not contract:
+                contract_count = self.db.count_contracts()
+                contract_count = contract_count + 1
+                contract_name = "CONTRACT_" + str(contract_count)
+                props['name'] = contract_name
+
                 self.create_contract(tenant, props['name'], filter_name, props['action'])
                 self.db.insert_contract(props)
                 contract = props
@@ -287,9 +305,11 @@ class ConsumerThread(AuroraThread):
                 removed_prov = []
 
             else:
+                props['name'] = contract['name']
                 # update filter entry
                 if filter_name != contract['filter_name']:
-                    self.change_contract_filter(tenant, props['name'], filter_name, contract['filter_name'], props['action'])
+                    self.change_contract_filter(tenant, props['name'], filter_name, contract['filter_name'],
+                                                props['action'])
                     self.db.update_contract_filter(props['_id'], filter_name, props['filter_entries'])
 
                 # update consumer/provider
@@ -334,8 +354,10 @@ class ConsumerThread(AuroraThread):
                 self.db.remove_contract('provided', removed_prov, contract['_id'])
 
         elif status == 'delete':
-            self.create_contract(tenant, props['name'], filter=None, action=None, delete=True)
+
             contract = self.db.get_contract(props['_id'], identifier='id')
+            props['name'] = contract['name']
+            self.create_contract(tenant, props['name'], filter=None, action=None, delete=True)
 
             self.db.remove_contract('consumed', contract['consumer_epg'], props['_id'])
             self.db.remove_contract('provided', contract['provider_epg'], props['_id'])
