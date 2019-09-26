@@ -162,6 +162,7 @@ class ConsumerThread(AuroraThread):
         ap = self.config['application_profile']
 
         if status == 'create' or status == 'update':
+            create_eps = True
             epg = self.db.get_epg(props['_id']) # get existing app state for EPG
 
             # Store endpoint membership with EP uuid instead of sys_id
@@ -170,6 +171,7 @@ class ConsumerThread(AuroraThread):
             try:
                 props['members'] = list(map(sysid_to_uuid, props['members']))
             except KeyError as error:
+                create_eps = False
                 self.logger.warning("EPG created before member EPs")
 
             if not epg:  # no previous state; creation of new EPG
@@ -183,6 +185,11 @@ class ConsumerThread(AuroraThread):
                 props['consumed'] = []
                 props['provided'] = []
                 self.db.insert_epg(props)
+                if create_eps:
+                    props['members'] = list(map(sysid_to_uuid, props['members']))
+                    for member in props['members']:
+                        endpoint = self.db.get_endpoint(member)
+                        self.create_ep(tenant, ap, props['name'], endpoint)
                 self.logger.info("Added endpoint {} to DB".format(props['name']))
             else: # update existing EPG
 
@@ -210,6 +217,7 @@ class ConsumerThread(AuroraThread):
                         self.logger.info("Removed grouping for endpoint {}".format(id))
                     for id in added:
                         endpoint = self.db.get_endpoint(id)
+                        self.create_ep(tenant, ap, props['name'], endpoint)
                         if endpoint['epg'] != props['_id']: # disassociate EP from previous EPG
                             self.db.update_epg_membership(endpoint['epg'], [id], remove=True)
                             self.logger.info("Removed {} from EPG {}".format(id, endpoint['epg']))
@@ -407,6 +415,45 @@ class ConsumerThread(AuroraThread):
             self.logger.info("Successfully processed contract '{}' for EPG '{}'".format(contract, epg))
 
 
+    def create_ep(self, tenant, ap, epg, endpoint):
+        """
+        Creating an static enpoint
+        """
+        mac_address = endpoint['mac_address']
+        ip_address = endpoint['ip_address']
+        dn = 'uni/tn-{}/ap-{}/epg-{}/stcep-{}-type-silent-host'.format(tenant, ap, epg, mac_address)
+        url = '/api/node/mo/{}.json'.format(dn)
+        payload = {
+            "fvStCEp": {
+                "attributes": {
+                    "dn": dn,
+                    "mac": mac_address,
+                    "ip": ip_address,
+                    "encap": "vlan-1"
+                },
+                "children": [
+                    {
+                        "fvRsStCEpToPathEp": {
+                            "attributes": {
+                                "tDn": "topology/pod-1/paths-101/pathep-[eth1/1]",
+                                "status": "created"
+                            },
+                            "children": []
+                        }
+                    }
+                ]
+            }
+        }
+        self.logger.info('Creating Endpoint whose mac address is {}'.format(mac_address))
+        res = self.apic.request("POST", url, data=json.dumps(payload))
+        if res.status_code == 200:
+            self.logger.info('Successfully created endpoint whose mac address is {}'.format(mac_address))
+        elif res.status_code == 400 and 'already exists' in res.text:
+            self.logger.info('Endpoint whose mac address is {}, already exists'.format(mac_address))
+        else:
+            self.logger.error('Following error occured while creating mac address - {}'.format(mac_address))
+
+    
     def create_epg(self, tenant, ap, epg, status='created,modified', delete=False):
         """Make an endpoint group
         Create fvAEPg on APIC

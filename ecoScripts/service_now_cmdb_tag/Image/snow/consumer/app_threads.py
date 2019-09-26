@@ -159,16 +159,17 @@ class ConsumerThread(AuroraThread):
 
             if dn == '':
                 self.logger.info('No instance exist in ACI which has the ip - {} and mac - {}'.format(ip_address, mac_address))
-            else:
-                self.logger.info('DN - {}'.format(dn))
-                if os != '':
-                    self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
-                    os = os.replace(' ', '_')
-                    self.create_tag(dn, 'os', os)
-                if source != '':
-                    self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
-                    os = os.replace(' ', '_')
-                    self.create_tag(dn, 'source', source)
+                self.create_ep(self.config['tenant'], self.config['application_profile'], 'servicenow_cmdb', props)
+            dn = self.get_dn(ip_address, mac_address)
+            self.logger.info('DN - {}'.format(dn))
+            if os != '':
+                self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
+                os = os.replace(' ', '_')
+                self.create_tag(dn, 'os', os)
+            if source != '':
+                self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
+                os = os.replace(' ', '_')
+                self.create_tag(dn, 'source', source)
         except Exception as e:
             self.logger.error('Error', e)
 
@@ -228,6 +229,44 @@ class ConsumerThread(AuroraThread):
                 ]
             }
         }
+    
+    def create_ep(self, tenant, ap, epg, endpoint):
+        """
+        Creating an static enpoint
+        """
+        mac_address = endpoint['mac_address']
+        ip_address = endpoint['ip_address']
+        dn = 'uni/tn-{}/ap-{}/epg-{}/stcep-{}-type-silent-host'.format(tenant, ap, epg, mac_address)
+        url = '/api/node/mo/{}.json'.format(dn)
+        payload = {
+            "fvStCEp": {
+                "attributes": {
+                    "dn": dn,
+                    "mac": mac_address,
+                    "ip": ip_address,
+                    "encap": "vlan-1"
+                },
+                "children": [
+                    {
+                        "fvRsStCEpToPathEp": {
+                            "attributes": {
+                                "tDn": "topology/pod-1/paths-101/pathep-[eth1/1]",
+                                "status": "created"
+                            },
+                            "children": []
+                        }
+                    }
+                ]
+            }
+        }
+        self.logger.info('Creating Endpoint whose mac address is {}'.format(mac_address))
+        res = self.apic.request("POST", url, data=json.dumps(payload))
+        if res.status_code == 200:
+            self.logger.info('Successfully created endpoint whose mac address is {}'.format(mac_address))
+        elif res.status_code == 400 and 'already exists' in res.text:
+            self.logger.info('Endpoint whose mac address is {}, already exists'.format(mac_address))
+        else:
+            self.logger.error('Following error occured while creating mac address - {}'.format(mac_address))
     
     # def process_endpoint_message(self, props, status):
     #     """Process endpoint message"""
