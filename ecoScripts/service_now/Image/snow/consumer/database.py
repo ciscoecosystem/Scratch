@@ -103,6 +103,13 @@ class Database:
         collection = self.db['epgs']
         collection.insert_one(document)
 
+        collection_epg_count = self.db['epgCount']
+        collection_epg_count.insert_one(document)
+
+    def count_epgs(self):
+        count = self.db['epgCount'].count_documents({})
+        return count
+
     def delete_epg(self, name, identifier='id'):
         if identifier == 'id':
             filter = {'_id': name}
@@ -200,6 +207,14 @@ class Database:
     def insert_contract(self, doc):
         collection = self.db['contracts']
         collection.insert_one(doc)
+
+        collection_contract_count = self.db['contractCount']
+        collection_contract_count.insert_one(doc)
+
+    def count_contracts(self):
+        count = self.db['contractCount'].count_documents({})
+        return count
+
 
     def delete_contract(self, name, identifier='id'):
         if identifier == 'id':
