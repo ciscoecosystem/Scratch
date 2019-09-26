@@ -31,6 +31,8 @@ ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk/
 
 # create venv and install pip dependencies
 RUN /opt/rh/rh-python36/root/usr/bin/python -m venv runner
+RUN runner/bin/pip3 install --upgrade pip
+RUN runner/bin/pip3 install --upgrade setuptools
 RUN runner/bin/pip3 install -r requirements.txt
 
 # add venv to path
