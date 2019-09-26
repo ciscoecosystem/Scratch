@@ -158,6 +158,13 @@ class Database:
         collection = self.db['epgs']
         collection.update_many({'_id': {'$in': epg_ids}}, {'$pullAll': {role: [contract_id]}})
 
+    def remove_contract_by_name(self, role, epg_name, contract_id):
+        """Remove contract from EPG document"""
+        assert role == 'consumed' or role == 'provided'
+
+        collection = self.db['epgs']
+        collection.update_many({'name': {'$in': epg_name}}, {'$pullAll': {role: [contract_id]}})
+
     def update_contract_filter(self, name, aci_filter, entries, identifier='id'):
         if identifier == 'id':
             filter = {'_id': name}

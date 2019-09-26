@@ -337,16 +337,18 @@ class ConsumerThread(AuroraThread):
             # associate contracts to EPG entries in database
             # assumes epgs already created
             if added_cons:
-                for epg_id in added_cons:
-                    consumer = self.db.get_epg(epg_id)
-                    self.attach_contract('consumed', tenant, ap, consumer['name'], contract['name'])
+                for epg_name in added_cons:
+                    #consumer = self.db.get_epg(epg_id)
+                    #self.attach_contract('consumed', tenant, ap, consumer['name'], contract['name'])
+                    self.attach_contract('consumed', tenant, ap, epg_name, contract['name'])
                 self.db.add_contract('consumed', added_cons, contract['_id'])
 
             if removed_cons:
-                for epg_id in removed_cons:
-                    consumer = self.db.get_epg(epg_id)
-                    self.attach_contract('consumed', tenant, ap, consumer['name'], contract['name'], delete=True)
-                self.db.remove_contract('consumed', removed_cons, contract['_id'])
+                for epg_name in removed_cons:
+                    #consumer = self.db.get_epg(epg_id)
+                    #self.attach_contract('consumed', tenant, ap, consumer['name'], contract['name'], delete=True)
+                    self.attach_contract('consumed', tenant, ap, epg_name, contract['name'], delete=True)
+                self.db.remove_contract_by_name('consumed', removed_cons, contract['_id'])
 
             if added_prov:
                 for epg_id in added_prov:
@@ -355,10 +357,11 @@ class ConsumerThread(AuroraThread):
                 self.db.add_contract('provided', added_prov, contract['_id'])
 
             if removed_prov:
-                for epg_id in removed_prov:
-                    provider = self.db.get_epg(epg_id)
-                    self.attach_contract('provided', tenant, ap, provider['name'], contract['name'], delete=True)
-                self.db.remove_contract('provided', removed_prov, contract['_id'])
+                for epg_name in removed_prov:
+                    #provider = self.db.get_epg(epg_id)
+                    #self.attach_contract('provided', tenant, ap, provider['name'], contract['name'], delete=True)
+                    self.attach_contract('provided', tenant, ap, epg_name, contract['name'], delete=True)
+                self.db.remove_contract_by_name('provided', removed_prov, contract['_id'])
 
         elif status == 'delete':
 
@@ -366,8 +369,8 @@ class ConsumerThread(AuroraThread):
             props['name'] = contract['name']
             self.create_contract(tenant, props['name'], filter=None, action=None, delete=True)
 
-            self.db.remove_contract('consumed', contract['consumer_epg'], props['_id'])
-            self.db.remove_contract('provided', contract['provider_epg'], props['_id'])
+            self.db.remove_contract_by_name('consumed', contract['consumer_epg'], props['_id'])
+            self.db.remove_contract_by_name('provided', contract['provider_epg'], props['_id'])
             self.db.delete_contract(props['_id'])
         else:
             pass # TODO possibly error handle if msg is bad?
