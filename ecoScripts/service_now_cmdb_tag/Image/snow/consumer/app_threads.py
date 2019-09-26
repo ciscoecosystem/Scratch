@@ -160,16 +160,16 @@ class ConsumerThread(AuroraThread):
             if dn == '':
                 self.logger.info('No instance exist in ACI which has the ip - {} and mac - {}'.format(ip_address, mac_address))
                 self.create_ep(self.config['tenant'], self.config['application_profile'], 'servicenow_cmdb', props)
-            else:
-                self.logger.info('DN - {}'.format(dn))
-                if os != '':
-                    self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
-                    os = os.replace(' ', '_')
-                    self.create_tag(dn, 'os', os)
-                if source != '':
-                    self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
-                    os = os.replace(' ', '_')
-                    self.create_tag(dn, 'source', source)
+            dn = self.get_dn(ip_address, mac_address)
+            self.logger.info('DN - {}'.format(dn))
+            if os != '':
+                self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
+                os = os.replace(' ', '_')
+                self.create_tag(dn, 'os', os)
+            if source != '':
+                self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
+                os = os.replace(' ', '_')
+                self.create_tag(dn, 'source', source)
         except Exception as e:
             self.logger.error('Error', e)
 
