@@ -341,7 +341,7 @@ class ConsumerThread(AuroraThread):
                     #consumer = self.db.get_epg(epg_id)
                     #self.attach_contract('consumed', tenant, ap, consumer['name'], contract['name'])
                     self.attach_contract('consumed', tenant, ap, epg_name, contract['name'])
-                self.db.add_contract('consumed', added_cons, contract['_id'])
+                self.db.add_contract_by_name('consumed', added_cons, contract['_id'])
 
             if removed_cons:
                 for epg_name in removed_cons:
@@ -351,10 +351,11 @@ class ConsumerThread(AuroraThread):
                 self.db.remove_contract_by_name('consumed', removed_cons, contract['_id'])
 
             if added_prov:
-                for epg_id in added_prov:
-                    provider = self.db.get_epg(epg_id)
-                    self.attach_contract('provided', tenant, ap, provider['name'], contract['name'])
-                self.db.add_contract('provided', added_prov, contract['_id'])
+                for epg_name in added_prov:
+                    #provider = self.db.get_epg(epg_id)
+                    #self.attach_contract('provided', tenant, ap, provider['name'], contract['name'])
+                    self.attach_contract('provided', tenant, ap, epg_name, contract['name'])
+                self.db.add_contract_by_name('provided', added_prov, contract['_id'])
 
             if removed_prov:
                 for epg_name in removed_prov:

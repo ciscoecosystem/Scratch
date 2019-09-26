@@ -151,6 +151,13 @@ class Database:
         collection = self.db['epgs']
         collection.update_one({'_id': {'$in': epg_ids}}, {'$addToSet': {role: contract_id}})
 
+    def add_contract_by_name(self, role, epg_names, contract_id):
+        """Add contract to EPG document as provider or consumer"""
+        assert role == 'consumed' or role == 'provided'
+
+        collection = self.db['epgs']
+        collection.update_one({'name': {'$in': epg_names}}, {'$addToSet': {role: contract_id}})
+
     def remove_contract(self, role, epg_ids, contract_id):
         """Remove contract from EPG document"""
         assert role == 'consumed' or role == 'provided'
