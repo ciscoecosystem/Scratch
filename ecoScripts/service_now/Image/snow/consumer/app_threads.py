@@ -186,7 +186,6 @@ class ConsumerThread(AuroraThread):
                 props['provided'] = []
                 self.db.insert_epg(props)
                 if create_eps:
-                    props['members'] = list(map(sysid_to_uuid, props['members']))
                     for member in props['members']:
                         endpoint = self.db.get_endpoint(member)
                         self.create_ep(tenant, ap, props['name'], endpoint)
