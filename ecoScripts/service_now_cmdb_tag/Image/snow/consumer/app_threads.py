@@ -239,11 +239,12 @@ class ConsumerThread(AuroraThread):
             if res.status_code == 200:
                 self.logger.info('Request successful for creating tags for dn - {}'.format(dn))
                 # self.logger.debug('Response of creating tag in ACI - {}'.format(res.text))
+            else:
+                if cnt <= 2:
+                    self.logger.info('Retrying')
+                    self.create_tag(dn, tag_key, tag_value, cnt+1)
         except Exception as e:
             self.logger.error('Error', e)
-            if cnt <= 2:
-                self.logger.info('Retrying')
-                self.create_tag(dn, tag_key, tag_value, cnt+1)
 
     def generate_tag_payload(self, dn, key, value):
         """
