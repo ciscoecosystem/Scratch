@@ -73,6 +73,7 @@ class ConsumerThread(AuroraThread):
         self.config = {}
         self.config['tenant'] = os.getenv('TENANT_NAME')
         self.config['application_profile'] = os.getenv('AP_NAME')
+        self.config['epg'] = 'servicenow_cmdb'
         self.config['mongo_host'] = os.getenv('MONGO_HOST')
         self.config['mongo_port'] = int(os.getenv('MONGO_PORT'))
         self.config['kafka_topic'] = os.getenv('TAG_OUTPUT_TOPIC')
@@ -99,6 +100,7 @@ class ConsumerThread(AuroraThread):
         with self.lock:
             self.apic = APIC.get_apic()
 
+        self.create_epg(self.config['tenant'], self.config['application_profile'], self.config['epg'])
         self.logger.info("Waiting for messages from Kafka")
         while not self.exit.is_set():
             msg_pack = self.consumer.poll()
@@ -148,9 +150,6 @@ class ConsumerThread(AuroraThread):
     def process_tag_message(self, props):
         """Process tag message"""
         try:
-            epg = 'servicenow_cmdb'
-            self.create_epg(self.config['tenant'], self.config['application_profile'], epg)
-            
             mac_address = props['mac_address']
             ip_address = props['ip_address']
             os = props['os']
@@ -162,8 +161,8 @@ class ConsumerThread(AuroraThread):
 
             if dn == '':
                 self.logger.info('No instance exist in ACI which has the ip - {} and mac - {}'.format(ip_address, mac_address))
-                self.create_ep(self.config['tenant'], self.config['application_profile'], epg, props)
-                dn = self.get_dn(ip_address, mac_address)
+                dn = 'uni/tn-{}/ap-{}/epg-{}/stcep-{}-type-silent-host'.format(self.config['tenant'], self.config['application_profile'], self.config['epg'], mac_address)
+                self.create_ep(dn, props)
             
             self.logger.info('DN - {}'.format(dn))
             if dn != '':
@@ -264,13 +263,12 @@ class ConsumerThread(AuroraThread):
             }
         }
     
-    def create_ep(self, tenant, ap, epg, endpoint):
+    def create_ep(self, dn, endpoint):
         """
         Creating an static enpoint
         """
         mac_address = endpoint['mac_address']
         ip_address = endpoint['ip_address']
-        dn = 'uni/tn-{}/ap-{}/epg-{}/stcep-{}-type-silent-host'.format(tenant, ap, epg, mac_address)
         url = '/api/node/mo/{}.json'.format(dn)
         payload = {
             "fvStCEp": {
