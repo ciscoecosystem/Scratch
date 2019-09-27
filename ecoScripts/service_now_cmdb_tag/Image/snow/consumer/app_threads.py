@@ -148,6 +148,9 @@ class ConsumerThread(AuroraThread):
     def process_tag_message(self, props):
         """Process tag message"""
         try:
+            epg = 'servicenow_cmdb'
+            self.create_epg(self.config['tenant'], self.config['application_profile'], epg)
+            
             mac_address = props['mac_address']
             ip_address = props['ip_address']
             os = props['os']
@@ -159,20 +162,46 @@ class ConsumerThread(AuroraThread):
 
             if dn == '':
                 self.logger.info('No instance exist in ACI which has the ip - {} and mac - {}'.format(ip_address, mac_address))
-                self.create_ep(self.config['tenant'], self.config['application_profile'], 'servicenow_cmdb', props)
-            dn = self.get_dn(ip_address, mac_address)
+                self.create_ep(self.config['tenant'], self.config['application_profile'], epg, props)
+                dn = self.get_dn(ip_address, mac_address)
+            
             self.logger.info('DN - {}'.format(dn))
-            if os != '':
-                self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
-                os = os.replace(' ', '_')
-                self.create_tag(dn, 'os', os)
-            if source != '':
-                self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
-                os = os.replace(' ', '_')
-                self.create_tag(dn, 'source', source)
+            if dn != '':
+                if os != '':
+                    self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
+                    os = os.replace(' ', '_')
+                    self.create_tag(dn, 'os', os)
+                if source != '':
+                    self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
+                    os = os.replace(' ', '_')
+                    self.create_tag(dn, 'source', source)
+            else:
+                self.logger.error('Endpoint doesnt exist with mac_address - {}'.format(mac_address))
         except Exception as e:
             self.logger.error('Error', e)
 
+    def create_epg(self, tenant, ap, epg):
+        """
+        Creating an static enpoint
+        """
+        dn = 'uni/tn-{}/ap-{}/epg-{}'.format(tenant, ap, epg)
+        url = '/api/node/mo/{}.json'.format(dn)
+        payload = {
+            "fvAEPg": {
+                "attributes": {
+                    "dn": dn
+                }
+            }
+        }
+        self.logger.info('Creating EPG with dn - {}'.format(dn))
+        res = self.apic.request("POST", url, data=json.dumps(payload))
+        if res.status_code == 200:
+            self.logger.info('Successfully created epg whose dn is {}'.format(dn))
+        elif res.status_code == 400 and 'already exists' in res.text:
+            self.logger.info('EPG whose dn is {}, already exists'.format(dn))
+        else:
+            self.logger.error('Following error occured while creating epg - {}'.format(res.text))
+    
     def get_dn(self, ip_address, mac_address):
         """
         gets the dn of the instance from ACI on the basis of ip and mac
@@ -185,11 +214,16 @@ class ConsumerThread(AuroraThread):
             if res.status_code == 200:
                 self.logger.info('Request successful for getting cep for ip_address - {}, mac_address - {}'.format(ip_address, mac_address))
             # self.logger.debug('Response of extracting dn - {}'.format(res.text))
-            instances = res.json()
-            if len(instances['imdata']) > 0:
-                instance = instances['imdata'][0]
-                dn = instance['fvCEp']['attributes']['dn']
-                self.logger.info('dn - {}'.format(dn))
+                instances = res.json()
+                if len(instances['imdata']) > 0:
+                    instance = instances['imdata'][0]
+                    dn = instance['fvCEp']['attributes']['dn']
+                    self.logger.info('dn - {}'.format(dn))
+                else:
+                    self.logger.error('As length of response is 0, response of request: {}'.format(res.text))
+            else:
+                self.logger.error('Status code - {}'.format(res.status_code))
+                self.logger.error('Response - {}'.format(res.text))
         except Exception as e:
             self.logger.error('Error', e)
         return dn
