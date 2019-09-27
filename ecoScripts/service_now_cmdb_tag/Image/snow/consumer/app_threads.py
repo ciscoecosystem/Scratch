@@ -163,6 +163,7 @@ class ConsumerThread(AuroraThread):
                 self.logger.info('No instance exist in ACI which has the ip - {} and mac - {}'.format(ip_address, mac_address))
                 dn = 'uni/tn-{}/ap-{}/epg-{}/stcep-{}-type-silent-host'.format(self.config['tenant'], self.config['application_profile'], self.config['epg'], mac_address)
                 self.create_ep(dn, props)
+                dn = 'uni/tn-{}/ap-{}/epg-{}/cep-{}'.format(self.config['tenant'], self.config['application_profile'], self.config['epg'], mac_address)
             
             self.logger.info('DN - {}'.format(dn))
             if dn != '':
