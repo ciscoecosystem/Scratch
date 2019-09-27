@@ -228,7 +228,7 @@ class ConsumerThread(AuroraThread):
             self.logger.error('Error', e)
         return dn
 
-    def create_tag(self, dn, tag_key, tag_value):
+    def create_tag(self, dn, tag_key, tag_value, cnt=0):
         """
         creates tag in ACI
         """
@@ -241,6 +241,9 @@ class ConsumerThread(AuroraThread):
                 # self.logger.debug('Response of creating tag in ACI - {}'.format(res.text))
         except Exception as e:
             self.logger.error('Error', e)
+            if cnt <= 2:
+                self.logger.info('Retrying')
+                self.create_tag(dn, tag_key, tag_value, cnt+1)
 
     def generate_tag_payload(self, dn, key, value):
         """
