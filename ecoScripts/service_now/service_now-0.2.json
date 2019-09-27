@@ -1,9 +1,9 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "type": "api",
   "configurable": true,
   "schedulable": true,
-  "docker_image": "dockerdipika/aurora",
+  "docker_image": "dockerdipika/aurora:dev",
   "config_parameters": [
     {
       "name": "snow_connection_parameters",
