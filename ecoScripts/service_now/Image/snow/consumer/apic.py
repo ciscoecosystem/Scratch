@@ -72,5 +72,7 @@ class APIC:
             response = self.session.request(method, url, **kwargs)
         elif response.status_code == 400:
             self.logger.error("Request failed: {}".format(response.text))
+            self.logger.info("Retrying")
+            response = self.session.request(method, url, **kwargs)
 
         return response

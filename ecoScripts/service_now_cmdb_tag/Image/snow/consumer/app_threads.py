@@ -73,6 +73,7 @@ class ConsumerThread(AuroraThread):
         self.config = {}
         self.config['tenant'] = os.getenv('TENANT_NAME')
         self.config['application_profile'] = os.getenv('AP_NAME')
+        self.config['epg'] = 'servicenow_cmdb'
         self.config['mongo_host'] = os.getenv('MONGO_HOST')
         self.config['mongo_port'] = int(os.getenv('MONGO_PORT'))
         self.config['kafka_topic'] = os.getenv('TAG_OUTPUT_TOPIC')
@@ -99,6 +100,7 @@ class ConsumerThread(AuroraThread):
         with self.lock:
             self.apic = APIC.get_apic()
 
+        self.create_epg(self.config['tenant'], self.config['application_profile'], self.config['epg'])
         self.logger.info("Waiting for messages from Kafka")
         while not self.exit.is_set():
             msg_pack = self.consumer.poll()
@@ -159,20 +161,47 @@ class ConsumerThread(AuroraThread):
 
             if dn == '':
                 self.logger.info('No instance exist in ACI which has the ip - {} and mac - {}'.format(ip_address, mac_address))
-                self.create_ep(self.config['tenant'], self.config['application_profile'], 'servicenow_cmdb', props)
-            dn = self.get_dn(ip_address, mac_address)
+                dn = 'uni/tn-{}/ap-{}/epg-{}/stcep-{}-type-silent-host'.format(self.config['tenant'], self.config['application_profile'], self.config['epg'], mac_address)
+                self.create_ep(dn, props)
+                dn = 'uni/tn-{}/ap-{}/epg-{}/cep-{}'.format(self.config['tenant'], self.config['application_profile'], self.config['epg'], mac_address)
+            
             self.logger.info('DN - {}'.format(dn))
-            if os != '':
-                self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
-                os = os.replace(' ', '_')
-                self.create_tag(dn, 'os', os)
-            if source != '':
-                self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
-                os = os.replace(' ', '_')
-                self.create_tag(dn, 'source', source)
+            if dn != '':
+                if os != '':
+                    self.logger.info('Creating OS Tag - {} for dn - {}'.format(os, dn))
+                    os = os.replace(' ', '_')
+                    self.create_tag(dn, 'os', os)
+                if source != '':
+                    self.logger.info('Creating Source Tag - {} for dn - {}'.format(source, dn))
+                    os = os.replace(' ', '_')
+                    self.create_tag(dn, 'source', source)
+            else:
+                self.logger.error('Endpoint doesnt exist with mac_address - {}'.format(mac_address))
         except Exception as e:
             self.logger.error('Error', e)
 
+    def create_epg(self, tenant, ap, epg):
+        """
+        Creating an static enpoint
+        """
+        dn = 'uni/tn-{}/ap-{}/epg-{}'.format(tenant, ap, epg)
+        url = '/api/node/mo/{}.json'.format(dn)
+        payload = {
+            "fvAEPg": {
+                "attributes": {
+                    "dn": dn
+                }
+            }
+        }
+        self.logger.info('Creating EPG with dn - {}'.format(dn))
+        res = self.apic.request("POST", url, data=json.dumps(payload))
+        if res.status_code == 200:
+            self.logger.info('Successfully created epg whose dn is {}'.format(dn))
+        elif res.status_code == 400 and 'already exists' in res.text:
+            self.logger.info('EPG whose dn is {}, already exists'.format(dn))
+        else:
+            self.logger.error('Following error occured while creating epg - {}'.format(res.text))
+    
     def get_dn(self, ip_address, mac_address):
         """
         gets the dn of the instance from ACI on the basis of ip and mac
@@ -185,16 +214,21 @@ class ConsumerThread(AuroraThread):
             if res.status_code == 200:
                 self.logger.info('Request successful for getting cep for ip_address - {}, mac_address - {}'.format(ip_address, mac_address))
             # self.logger.debug('Response of extracting dn - {}'.format(res.text))
-            instances = res.json()
-            if len(instances['imdata']) > 0:
-                instance = instances['imdata'][0]
-                dn = instance['fvCEp']['attributes']['dn']
-                self.logger.info('dn - {}'.format(dn))
+                instances = res.json()
+                if len(instances['imdata']) > 0:
+                    instance = instances['imdata'][0]
+                    dn = instance['fvCEp']['attributes']['dn']
+                    self.logger.info('dn - {}'.format(dn))
+                else:
+                    self.logger.error('As length of response is 0, response of request: {}'.format(res.text))
+            else:
+                self.logger.error('Status code - {}'.format(res.status_code))
+                self.logger.error('Response - {}'.format(res.text))
         except Exception as e:
             self.logger.error('Error', e)
         return dn
 
-    def create_tag(self, dn, tag_key, tag_value):
+    def create_tag(self, dn, tag_key, tag_value, cnt=0):
         """
         creates tag in ACI
         """
@@ -230,13 +264,12 @@ class ConsumerThread(AuroraThread):
             }
         }
     
-    def create_ep(self, tenant, ap, epg, endpoint):
+    def create_ep(self, dn, endpoint):
         """
         Creating an static enpoint
         """
         mac_address = endpoint['mac_address']
         ip_address = endpoint['ip_address']
-        dn = 'uni/tn-{}/ap-{}/epg-{}/stcep-{}-type-silent-host'.format(tenant, ap, epg, mac_address)
         url = '/api/node/mo/{}.json'.format(dn)
         payload = {
             "fvStCEp": {
