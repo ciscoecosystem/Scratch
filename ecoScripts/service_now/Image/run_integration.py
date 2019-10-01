@@ -15,13 +15,16 @@ def main():
     kafka_input_topic = os.getenv('KAFKA_INPUT_TOPIC')
     kafka_output_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
 
+    pigeon.sendInfoMessage("Start pipeline process!!")
     pipeline = subprocess.Popen(split(["java", "-jar", "/app/data-pipeline-bundled-0.1.jar", "--runner=FlinkRunner",
                                        "--flinkMaster={}".format(flink_ip), "--kafkaIP={}".format(kafka_ip),
                                        "--kafkaPort={}".format(kafka_port),
                                        "--kafkaInputTopic={}".format(kafka_input_topic),
                                        "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true",
                                        "--parallelism=1"]), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pigeon.sendInfoMessage("Getting job id from pipeline now")
     str_job = "Submitting job"
+    job_id = ""
     while True:
         line = pipeline.stdout.readline()
         if not line:
@@ -32,6 +35,7 @@ def main():
             job_id = job_id_str[0]
             print("Got job id from run_integration.py ", job_id)
 
+    pigeon.sendInfoMessage("Got job id from pipeline now", job_id)
     consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
     connector = subprocess.Popen(["python", "-m", "snow.snow-table-parser.aurora_snow_connector"])
 
