@@ -16,12 +16,13 @@ def main():
     kafka_output_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
 
     pigeon.sendInfoMessage("Start pipeline process!!")
-    pipeline = subprocess.Popen(split(["java", "-jar", "/app/data-pipeline-bundled-0.1.jar", "--runner=FlinkRunner",
-                                       "--flinkMaster={}".format(flink_ip), "--kafkaIP={}".format(kafka_ip),
+    pipeline = subprocess.Popen(["java", "-jar", "/app/data-pipeline-bundled-0.1.jar", "--runner=FlinkRunner",
+                                       "--flinkMaster={}".format(flink_ip),
+                                       "--kafkaIP={}".format(kafka_ip),
                                        "--kafkaPort={}".format(kafka_port),
                                        "--kafkaInputTopic={}".format(kafka_input_topic),
                                        "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true",
-                                       "--parallelism=1"]), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                       "--parallelism=1"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     pigeon.sendInfoMessage("Getting job id from pipeline now")
     str_job = "Submitting job"
     job_id = ""
