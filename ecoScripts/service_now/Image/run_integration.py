@@ -1,5 +1,7 @@
 import subprocess
 import os
+import json
+import requests
 from shlex import split
 from pigeon import Pigeon
 
@@ -15,28 +17,30 @@ def main():
     kafka_input_topic = os.getenv('KAFKA_INPUT_TOPIC')
     kafka_output_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
 
-    pigeon.sendInfoMessage("Start pipeline process!!")
-    pipeline = subprocess.Popen(["java", "-jar", "/app/data-pipeline-bundled-0.1.jar", "--runner=FlinkRunner",
-                                       "--flinkMaster={}".format(flink_ip),
-                                       "--kafkaIP={}".format(kafka_ip),
-                                       "--kafkaPort={}".format(kafka_port),
-                                       "--kafkaInputTopic={}".format(kafka_input_topic),
-                                       "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true",
-                                       "--parallelism=1"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    pigeon.sendInfoMessage("Getting job id from pipeline now")
-    str_job = "Submitting job"
-    job_id = ""
-    while True:
-        line = pipeline.stdout.readline()
-        if not line:
+    flinkUrl = "http://" + flink_ip + ":8081/jobs/overview"
+    process_running = False
+    response = requests.get(flinkUrl)
+    resp_dict = json.loads(response.content)
+    for job in resp_dict.get('jobs'):
+        if job.get('state') == 'RUNNING' and job.get('name').find('auroradatapipeline') >= 0:
+            print(job.get('name'))
+            flink_job_id=job.get('jid')
+            process_running = True
             break
-        if str_job in line:
-            print("Got line having job id from the pipeline process from run_integration.py :", line.rstrip())
-            job_id_str = line.rstrip().split(str_job)[1].lstrip().split(' ')
-            job_id = job_id_str[0]
-            print("Got job id from run_integration.py ", job_id)
 
-    pigeon.sendInfoMessage("Got job id from pipeline now", job_id)
+    if not process_running:
+        pigeon.sendInfoMessage("Start pipeline process!!")
+        pipeline = subprocess.Popen(["java", "-jar", "/app/data-pipeline-bundled-0.1.jar", "--runner=FlinkRunner",
+                                     "--flinkMaster={}".format(flink_ip),
+                                     "--kafkaIP={}".format(kafka_ip),
+                                     "--kafkaPort={}".format(kafka_port),
+                                     "--kafkaInputTopic={}".format(kafka_input_topic),
+                                     "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true",
+                                     "--parallelism=1", ">>", "temp.log"], stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+    else:
+        pigeon.sendInfoMessage("Not starting flink pipeline as it is already running with id: "+flink_job_id+" on "+flinkUrl)
+
     consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
     connector = subprocess.Popen(["python", "-m", "snow.snow-table-parser.aurora_snow_connector"])
 
