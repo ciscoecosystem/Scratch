@@ -37,15 +37,18 @@ def main():
                                      "--kafkaInputTopic={}".format(kafka_input_topic),
                                      "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true",
                                      "--parallelism=1"])
+        consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
+        connector = subprocess.Popen(["python", "-m", "snow.snow-table-parser.aurora_snow_connector"])
         pipeline.wait()
+        consumer.wait()
+        connector.wait()
+
     else:
         pigeon.sendInfoMessage("Not starting flink pipeline as it is already running with id: "+flink_job_id+" on "+flinkUrl)
-
-    consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
-    connector = subprocess.Popen(["python", "-m", "snow.snow-table-parser.aurora_snow_connector"])
-
-    consumer.wait()
-    connector.wait()
+        consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
+        connector = subprocess.Popen(["python", "-m", "snow.snow-table-parser.aurora_snow_connector"])
+        consumer.wait()
+        connector.wait()
 
 
 if __name__ == '__main__':
