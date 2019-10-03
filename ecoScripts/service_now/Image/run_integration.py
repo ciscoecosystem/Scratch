@@ -38,13 +38,13 @@ def main():
                                      "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true",
                                      "--parallelism=1", ">>", "temp.log"], stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
+        pipeline.wait()
     else:
         pigeon.sendInfoMessage("Not starting flink pipeline as it is already running with id: "+flink_job_id+" on "+flinkUrl)
 
     consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
     connector = subprocess.Popen(["python", "-m", "snow.snow-table-parser.aurora_snow_connector"])
 
-    pipeline.wait()
     consumer.wait()
     connector.wait()
 
