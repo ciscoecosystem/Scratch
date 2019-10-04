@@ -1,9 +1,12 @@
 import subprocess
 import os
-
+import json
+import requests
+from shlex import split
 from pigeon import Pigeon
 
 pigeon = Pigeon()
+
 
 def main():
     pigeon.sendInfoMessage("Starting integration")
@@ -14,14 +17,41 @@ def main():
     kafka_input_topic = os.getenv('TAG_INPUT_TOPIC')
     kafka_output_topic = os.getenv('TAG_OUTPUT_TOPIC')
 
-    pipeline = subprocess.Popen(["java", "-jar", "/app/data-pipeline-cmdb-tag-bundled-0.1.jar", "--runner=FlinkRunner", "--flinkMaster={}".format(flink_ip), "--kafkaIP={}".format(kafka_ip), "--kafkaPort={}".format(kafka_port), "--kafkaInputTopic={}".format(kafka_input_topic), "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true", "--parallelism=1"])
-    consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
-    connector = subprocess.Popen(["python", "-m", "snow.snow-tag-parser.aurora_snow_tag_connector"])
+    flinkUrl = "http://" + flink_ip + ":8081/jobs/overview"
+    process_running = False
+    response = requests.get(flinkUrl)
+    resp_dict = json.loads(response.content)
+    for job in resp_dict.get('jobs'):
+        if job.get('state') == 'RUNNING' and job.get('name').find('auroradatapipelinetag') >= 0:
+            print(job.get('name'))
+            flink_job_id=job.get('jid')
+            process_running = True
+            break
 
-    pipeline.wait()
-    consumer.wait()
-    connector.wait()
+    if not process_running:
+        pigeon.sendInfoMessage("Start pipeline process!!")
+        pipeline = subprocess.Popen(["java", "-jar", "/app/data-pipeline-cmdb-tag-bundled-0.1.jar", "--runner=FlinkRunner",
+                                     "--flinkMaster={}".format(flink_ip),
+                                     "--kafkaIP={}".format(kafka_ip),
+                                     "--kafkaPort={}".format(kafka_port),
+                                     "--kafkaInputTopic={}".format(kafka_input_topic),
+                                     "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true",
+                                     "--parallelism=1"])
+        consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
+        connector = subprocess.Popen(["python", "-m", "snow.snow-tag-parser.aurora_snow_tag_connector"])
+        pipeline.wait()
+        consumer.wait()
+        connector.wait()
+
+    else:
+        pigeon.sendInfoMessage("Not starting flink pipeline as it is already running with id: "+flink_job_id+" on "+flinkUrl)
+        consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
+        connector = subprocess.Popen(["python", "-m", "snow.snow-tag-parser.aurora_snow_tag_connector"])
+        consumer.wait()
+        connector.wait()
+
 
 if __name__ == '__main__':
     main()
+
 
