@@ -22,7 +22,7 @@ def main():
     response = requests.get(flinkUrl)
     resp_dict = json.loads(response.content)
     for job in resp_dict.get('jobs'):
-        if job.get('state') == 'RUNNING' and job.get('name').find('auroradatapipelinetag') >= 0:
+        if job.get('state') == 'RUNNING' and job.get('name').find('auroratagdatapipeline') >= 0:
             print(job.get('name'))
             flink_job_id=job.get('jid')
             process_running = True
