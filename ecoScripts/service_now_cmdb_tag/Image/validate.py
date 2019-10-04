@@ -122,8 +122,9 @@ def test_kafka():
     inp_topic = os.getenv('TAG_INPUT_TOPIC')
     out_topic = os.getenv('TAG_OUTPUT_TOPIC')
 
-    os.putenv("TAG_OFFSET_TOPIC", "tag_offset")
-    offset_topic = os.getenv("TAG_OFFSET_TOPIC")
+    #os.putenv("TAG_OFFSET_TOPIC", "tag_offset")
+    #offset_topic = os.getenv("TAG_OFFSET_TOPIC")
+    offset_topic = "offset-" + inp_topic + "-" + out_topic
 
     try:
         host = '{}:{}'.format(kafka_ip, kafka_port)

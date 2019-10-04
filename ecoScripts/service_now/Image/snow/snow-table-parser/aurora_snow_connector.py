@@ -21,8 +21,10 @@ class snow_data:
         self.kafka_hostname = os.environ.get(config_dict['kafka_hostname'])
         self.kafka_port = os.environ.get(config_dict['kafka_port']) 
         self.initial_offset = config_dict['initial_offset']
-        self.kafka_data_topic = os.environ.get(config_dict['kafka_data_topic'])
-        self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
+        self.kafka_input_topic = os.environ.get(config_dict['kafka_input_topic'])
+        self.kafka_output_topic = os.environ.get(config_dict['kafka_output_topic'])
+        #self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
+        self.kafka_offset_topic=offset_topic = "offset-" + self.kafka_input_topic + "-" + self.kafka_output_topic
         self.restart_from_offset = config_dict['restart_from_offset']
 
         # SNOW configs
@@ -178,7 +180,7 @@ class snow_data:
             host = '{}:{}'.format(self.kafka_hostname, self.kafka_port)
             self.logger.info(host)
             client = KafkaClient(hosts=host)
-            data_topic = client.topics[self.kafka_data_topic]
+            data_topic = client.topics[self.kafka_input_topic]
             data_producer = data_topic.get_sync_producer()
 
             if self.restart_from_offset:
