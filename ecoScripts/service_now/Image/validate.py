@@ -122,8 +122,8 @@ def test_kafka():
     inp_topic = os.getenv('KAFKA_INPUT_TOPIC')
     out_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
 
-    #offset_topic = os.getenv("KAFKA_OFFSET_TOPIC")
-    offset_topic="offset-"+inp_topic+"-"+out_topic
+    # offset_topic = os.getenv("KAFKA_OFFSET_TOPIC")
+    offset_topic = "offset-" + inp_topic + "-" + out_topic
 
     try:
         host = '{}:{}'.format(kafka_ip, kafka_port)
@@ -135,7 +135,7 @@ def test_kafka():
 
         broker_topics = simple_client.topic_partitions
         data_topics = [inp_topic, out_topic, offset_topic]
-
+        topic_exists = False
         for curr_topic in data_topics:
             if curr_topic:
                 if curr_topic not in broker_topics:
@@ -144,8 +144,19 @@ def test_kafka():
                     pigeon.sendInfoMessage("Topics created")
                 else:
                     pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
+                    topic_exists = True
             else:
-                pigeon.sendInfoMessage("Topic does not exist:")
+                pigeon.sendInfoMessage("Topic does not exist")
+
+        client.close()
+        simple_client.close()
+
+        if topic_exists:
+            pigeon.sendUpdate({
+                'status': 'error',
+                'message': 'Topic already exists.Please enter different input and output topic names.'
+            })
+            return False
 
         client.close()
         simple_client.close()
