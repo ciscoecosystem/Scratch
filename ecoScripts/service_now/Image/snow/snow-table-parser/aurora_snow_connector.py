@@ -59,23 +59,28 @@ class snow_data:
 
 
     @handle_exception
-    def get_checkpoint(self, client):
+    def get_offset(self, client):
         """
         gets the last_query_time from the kafka topic
+
+        writing offset twice intially as there's a bug
+        in current kafka library - latest record can only
+        be read if there are two records in the kafka topic
         """
         offset_topic = client.topics[self.kafka_offset_topic]
         offset_consumer = offset_topic.get_simple_consumer(auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=True)
         for p, op in offset_consumer._partitions.items():
+            # if there are less than 2 records in kafka topic, write the offset twice
             if op.next_offset < 2:
-                self.write_checkpoint(client, self.initial_offset)
-                self.write_checkpoint(client, self.initial_offset)
+                self.write_offset(client, self.initial_offset)
+                self.write_offset(client, self.initial_offset)
             offsets = [(p, op.next_offset - 2)]
         offset_consumer.reset_offsets(offsets)
         return offset_consumer.consume().value.decode('utf-8')
 
 
     @handle_exception
-    def write_checkpoint(self, client, current_query_time):
+    def write_offset(self, client, current_query_time):
         """
         writes the current_query_time to the kafka topic
         """
@@ -104,16 +109,26 @@ class snow_data:
         and make a query of that table
         and store the result in filtered_response
         """
-        mark_table = []
         filtered_response = dict()
         filtered_response['result']= []
-        for result in response['result']:
-            table_name = result['sys_class_name']
+        tables = set([ci['sys_class_name'] for ci in response['result']])
+        for table_name in tables:
             # TODO: Replace ```table_name == 'cmdb_ci_vmware_instance'``` with ```table_name in self.child_tables``` in below if condition
-            if table_name == 'cmdb_ci_vmware_instance' and table_name not in mark_table:
+            if table_name == 'cmdb_ci_vmware_instance':
                 table_response = self.read_data(table_name, query)
                 filtered_response['result'] += table_response['result']
-                mark_table.append(table_name)
+
+        # mark_table = []
+        # filtered_response = dict()
+        # filtered_response['result']= []
+        # for result in response['result']:
+        #     table_name = result['sys_class_name']
+        #     # TODO: Take table name from customer
+        #     # TODO: Replace ```table_name == 'cmdb_ci_vmware_instance'``` with ```table_name in self.child_tables``` in below if condition
+        #     if table_name == 'cmdb_ci_vmware_instance' and table_name not in mark_table:
+        #         table_response = self.read_data(table_name, query)
+        #         filtered_response['result'] += table_response['result']
+        #         mark_table.append(table_name)
         return filtered_response
 
 
@@ -158,10 +173,12 @@ class snow_data:
         queries the tables and writes the data in the kafka topic
         """
         self.logger.info('Reading all the records from SNOW table {} updated between {} UTC and {} UTC'.format(tablename, last_query_time, current_query_time))
-        response = self.read_data(tablename, query)
         if to_filter:
+            response = self.read_data(tablename, '{}&sysparm_fields=sys_class_name'.format(query))
             self.logger.info('Filter the read table data')
             response = self.filter_table_data(response, query)
+        else:
+            response = self.read_data(tablename, query)
         if len(response['result']) > 0:
             response = self.create_ci_info(response, category)
             self.logger.info('Writing the data in the kafka topic')
@@ -176,6 +193,7 @@ class snow_data:
     def main(self):
         try:
             # starting the kafka producer
+            # TODO: initial offset should be current day - n days, n should be configurable
             self.logger.info('Starting the kafka producer')
             host = '{}:{}'.format(self.kafka_hostname, self.kafka_port)
             self.logger.info(host)
@@ -184,25 +202,29 @@ class snow_data:
             data_producer = data_topic.get_sync_producer()
 
             if self.restart_from_offset:
-                self.write_checkpoint(client, self.initial_offset)
-                self.write_checkpoint(client, self.initial_offset)
+                # writing offset twice intially as there's a bug in current kafka library - latest record can only be read if there are two records in the kafka topic
+                self.write_offset(client, self.initial_offset)
+                self.write_offset(client, self.initial_offset)
 
             while True:
                 # get the last query time and write current query time in the kafka topic
-                last_query_time = self.get_checkpoint(client)
+                last_query_time = self.get_offset(client)
                 current_query_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-                self.write_checkpoint(client, current_query_time)
 
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time)
                 self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep', data_producer)
+                # TODO: validate need of time.sleep(1)
                 time.sleep(1)
 
-                # TODO: add read query in below line
-                query = ''
+                # TODO: remove query below
+                if str(last_query_time) != str(self.initial_offset):
+                    query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&sysparm_fields=sys_class_name'.format(last_query_time, current_query_time)
+                else:
+                    query = ''
                 self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False, 'reltype', data_producer)
                 time.sleep(1)
 
-                # TODO: remove type.sys_id filter from the below query
+                # TODO: remove type.sys_id filter from the below query and rel type should also be configurable by customer
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(last_query_time, current_query_time)
                 self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel', data_producer)
                 time.sleep(1)
@@ -219,10 +241,11 @@ class snow_data:
                     #     if variable != 'y':
                     #         continue
                     #     break
+                self.write_offset(client, current_query_time)
 
-                    self.logger.info('Starting the timer')
-                    self.start_timer()
-                    self.logger.info('Timer over\n')
+                self.logger.info('Starting the timer')
+                self.start_timer()
+                self.logger.info('Timer over\n')
         except Exception as e:
             self.logger.error(e)
             self.logger.error('Exiting snow')
