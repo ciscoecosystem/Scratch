@@ -136,7 +136,7 @@ def test_kafka():
 
         broker_topics = simple_client.topic_partitions
         data_topics = [inp_topic, out_topic, offset_topic]
-
+        topic_exists = False
         for curr_topic in data_topics:
             if curr_topic:
                 if curr_topic not in broker_topics:
@@ -145,11 +145,19 @@ def test_kafka():
                     pigeon.sendInfoMessage("Topics created")
                 else:
                     pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
+                    topic_exists = True
             else:
                 pigeon.sendInfoMessage("Topic does not exist:")
 
         client.close()
         simple_client.close()
+
+        if topic_exists:
+            pigeon.sendUpdate({
+                'status': 'error',
+                'message': 'Topic already exists.Please enter different input and output topic names.'
+            })
+            return False
 
         ''' In case there is need to delete the topics 
             for curr_topic in broker_topics:
