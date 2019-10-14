@@ -61,7 +61,7 @@ class tag_data:
 
     
     @handle_exception
-    def get_checkpoint(self, client):
+    def get_offset(self, client):
         """
         gets the last_query_time from the kafka topic
         """
@@ -69,15 +69,15 @@ class tag_data:
         offset_consumer = offset_topic.get_simple_consumer(auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=True)
         for p, op in offset_consumer._partitions.items():
             if op.next_offset < 2:
-                self.write_checkpoint(client, self.initial_offset)
-                self.write_checkpoint(client, self.initial_offset)
+                self.write_offset(client, self.initial_offset)
+                self.write_offset(client, self.initial_offset)
             offsets = [(p, op.next_offset - 2)]
         offset_consumer.reset_offsets(offsets)
         return offset_consumer.consume().value.decode('utf-8')
 
     
     @handle_exception
-    def write_checkpoint(self, client, current_query_time):
+    def write_offset(self, client, current_query_time):
         """
         writes the current_query_time to the kafka topic
         """
@@ -184,14 +184,13 @@ class tag_data:
             data_producer = data_topic.get_sync_producer(max_request_size=self.max_request_size)
 
             if self.restart_from_offset:
-                self.write_checkpoint(client, self.initial_offset)
-                self.write_checkpoint(client, self.initial_offset)
+                self.write_offset(client, self.initial_offset)
+                self.write_offset(client, self.initial_offset)
 
             while True:
                 # get the last query time and write current query time in the kafka topic
-                last_query_time = self.get_checkpoint(client)
+                last_query_time = self.get_offset(client)
                 current_query_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-                self.write_checkpoint(client, current_query_time)
 
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time)
                 self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep', data_producer)
@@ -223,10 +222,12 @@ class tag_data:
                     #     if variable != 'y':
                     #         continue
                     #     break
-                    
-                    self.logger.info('Starting the timer')
-                    self.start_timer()
-                    self.logger.info('Timer over\n')
+
+                self.write_offset(client, current_query_time)    
+                
+                self.logger.info('Starting the timer')
+                self.start_timer()
+                self.logger.info('Timer over\n')
         except Exception as e:
             self.logger.error(e)
             self.logger.error('Exiting code')
