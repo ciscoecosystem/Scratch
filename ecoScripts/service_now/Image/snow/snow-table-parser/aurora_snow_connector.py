@@ -195,9 +195,7 @@ class snow_data:
             # starting the kafka producer
             # TODO: initial offset should be current day - n days, n should be configurable
             self.logger.info('Starting the kafka producer')
-            host = '{}:{}'.format(self.kafka_hostname, self.kafka_port)
-            self.logger.info(host)
-            client = KafkaClient(hosts=host)
+            client = KafkaClient(hosts = '{}:{}'.format(self.kafka_hostname, self.kafka_port))
             data_topic = client.topics[self.kafka_input_topic]
             data_producer = data_topic.get_sync_producer()
 
@@ -241,11 +239,12 @@ class snow_data:
                     #     if variable != 'y':
                     #         continue
                     #     break
-                self.write_offset(client, current_query_time)
+            
+            self.write_offset(client, current_query_time)
 
-                self.logger.info('Starting the timer')
-                self.start_timer()
-                self.logger.info('Timer over\n')
+            self.logger.info('Starting the timer')
+            self.start_timer()
+            self.logger.info('Timer over\n')
         except Exception as e:
             self.logger.error(e)
             self.logger.error('Exiting snow')
