@@ -16,6 +16,8 @@ def main():
     kafka_port = os.getenv('KAFKA_PORT')
     kafka_input_topic = os.getenv('TAG_INPUT_TOPIC')
     kafka_output_topic = os.getenv('TAG_OUTPUT_TOPIC')
+    es_host = os.getenv('ES_HOSTNAME')
+    es_port = os.getenv('ES_PORT')
 
     flinkUrl = "http://" + flink_ip + ":8081/jobs/overview"
     process_running = False
@@ -35,7 +37,10 @@ def main():
                                      "--kafkaIP={}".format(kafka_ip),
                                      "--kafkaPort={}".format(kafka_port),
                                      "--kafkaInputTopic={}".format(kafka_input_topic),
-                                     "--kafkaOutputTopic={}".format(kafka_output_topic), "--streaming=true",
+                                     "--kafkaOutputTopic={}".format(kafka_output_topic),
+                                     "--esHost={}".format(es_host),
+                                     "--esPort={}".format(es_port),
+                                     "--streaming=true",
                                      "--parallelism=1"])
         consumer = subprocess.Popen(["python", "-m", "snow.consumer.app"])
         connector = subprocess.Popen(["python", "-m", "snow.snow-tag-parser.aurora_snow_tag_connector"])
