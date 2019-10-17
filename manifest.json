@@ -6,7 +6,7 @@
       "0.2"
     ],
     "latest": "0.2",
-    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-dev/ecoScripts/service_now",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration/ecoScripts/service_now",
     "icon": "icon.png",
     "tags": "user",
     "required_targets": [
@@ -20,7 +20,7 @@
       "0.2"
     ],
     "latest": "0.2",
-    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-dev/ecoScripts/service_now_cmdb_tag",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration/ecoScripts/service_now_cmdb_tag",
     "icon": "icon.png",
     "tags": "user",
     "required_targets": [
