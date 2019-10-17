@@ -34,7 +34,8 @@ polling_interval: 120
 # Kafka details
 kafka_hostname: KAFKA_HOSTNAME
 kafka_port: KAFKA_PORT
-kafka_data_topic: KAFKA_INPUT_TOPIC
+kafka_input_topic: KAFKA_INPUT_TOPIC
+kafka_output_topic: KAFKA_OUTPUT_TOPIC
 kafka_offset_topic: KAFKA_OFFSET_TOPIC
 initial_offset: 2019-06-19 10:00:00
 
