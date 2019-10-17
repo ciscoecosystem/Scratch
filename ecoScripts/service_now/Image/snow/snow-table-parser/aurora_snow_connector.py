@@ -240,11 +240,11 @@ class snow_data:
                     #         continue
                     #     break
             
-            self.write_offset(client, current_query_time)
+                self.write_offset(client, current_query_time)
 
-            self.logger.info('Starting the timer')
-            self.start_timer()
-            self.logger.info('Timer over\n')
+                self.logger.info('Starting the timer')
+                self.start_timer()
+                self.logger.info('Timer over\n')
         except Exception as e:
             self.logger.error(e)
             self.logger.error('Exiting snow')
