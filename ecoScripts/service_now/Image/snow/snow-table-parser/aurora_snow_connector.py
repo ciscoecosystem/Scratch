@@ -24,7 +24,7 @@ class snow_data:
         self.kafka_input_topic = os.environ.get(config_dict['kafka_input_topic'])
         self.kafka_output_topic = os.environ.get(config_dict['kafka_output_topic'])
         #self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
-        self.kafka_offset_topic=offset_topic = "offset-" + self.kafka_input_topic + "-" + self.kafka_output_topic
+        self.kafka_offset_topic = "offset-" + self.kafka_input_topic + "-" + self.kafka_output_topic
         self.restart_from_offset = config_dict['restart_from_offset']
 
         # SNOW configs
