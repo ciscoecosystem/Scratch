@@ -37,7 +37,7 @@ kafka_port: KAFKA_PORT
 kafka_input_topic: KAFKA_INPUT_TOPIC
 kafka_output_topic: KAFKA_OUTPUT_TOPIC
 kafka_offset_topic: KAFKA_OFFSET_TOPIC
-initial_offset: 2019-06-19 10:00:00
+initial_offset: FETCH_DURATION
 
 # if set True, when you restart the python script it will read data from the initial_offset to current time
 restart_from_offset: False

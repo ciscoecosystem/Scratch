@@ -20,7 +20,7 @@ class tag_data:
         # kafka details
         self.kafka_hostname = os.environ.get(config_dict['kafka_hostname'])
         self.kafka_port = os.environ.get(config_dict['kafka_port'])
-        self.initial_offset = config_dict['initial_offset']
+        self.initial_offset = get_time(os.environ.get(config_dict['initial_offset']))
         self.kafka_input_topic = os.environ.get(config_dict['kafka_input_topic'])
         self.kafka_output_topic = os.environ.get(config_dict['kafka_output_topic'])
         #self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
@@ -57,6 +57,14 @@ class tag_data:
         filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
         with open(filename, 'r') as stream:
             return yaml.safe_load(stream)
+
+    
+    @handle_exception
+    def get_time(self, days):
+        """
+        returns current time - given paramater 'days'
+        """
+        return (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
 
     
     @handle_exception

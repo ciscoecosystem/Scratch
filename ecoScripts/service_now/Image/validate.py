@@ -20,10 +20,26 @@ def test_snow():
     snow_url = os.getenv('SNOW_URL')
     snow_username = os.getenv('SNOW_USERNAME')
     snow_password = os.getenv('SNOW_PASSWORD')
+    fetch_from_duration = os.getenv('FETCH_DURATION')
     table_name = 'cmdb_ci'
 
     try:
         pigeon.sendInfoMessage("Testing SNOW")
+        
+        if not fetch_from_duration.isdigit():
+            pigeon.sendUpdate({
+                'status': 'error',
+                'message': 'Entered Fetch From Duration is not integer'
+            })
+            return False
+        
+        if int(fetch_from_duration) == 0 or int(fetch_from_duration) > 365:
+            pigeon.sendUpdate({
+                'status': 'error',
+                'message': 'Entered Fetch From Duration should be greater than 0 and less than 366'
+            })
+            return False
+
         query_url = '{}/api/now/table/{}?sysparm_limit=1'.format(snow_url, table_name)
         response = requests.get(query_url, auth=(snow_username, snow_password))
         if response.status_code == 200 and json.loads(response.content)['result']:

@@ -20,7 +20,7 @@ class snow_data:
         # kafka details
         self.kafka_hostname = os.environ.get(config_dict['kafka_hostname'])
         self.kafka_port = os.environ.get(config_dict['kafka_port']) 
-        self.initial_offset = config_dict['initial_offset']
+        self.initial_offset = get_time(os.environ.get(config_dict['initial_offset']))
         self.kafka_input_topic = os.environ.get(config_dict['kafka_input_topic'])
         self.kafka_output_topic = os.environ.get(config_dict['kafka_output_topic'])
         #self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
@@ -58,6 +58,14 @@ class snow_data:
             return yaml.safe_load(stream)
 
 
+    @handle_exception
+    def get_time(self, days):
+        """
+        returns current time - given paramater 'days'
+        """
+        return (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+
+    
     @handle_exception
     def get_offset(self, client):
         """

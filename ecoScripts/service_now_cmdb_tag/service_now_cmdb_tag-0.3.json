@@ -51,6 +51,16 @@
           "placeholder": "ServiceNow Password",
           "order": 3,
           "verify": false
+        },
+        {
+          "name": "fetch_from_duration",
+          "label": "Fetch From Duration",
+          "type": "text",
+          "environment_variable_name": "FETCH_DURATION",
+          "required": true,
+          "placeholder": "Fetch From Duration (Days)",
+          "order": 4,
+          "verify": false
         }
       ]
     },
