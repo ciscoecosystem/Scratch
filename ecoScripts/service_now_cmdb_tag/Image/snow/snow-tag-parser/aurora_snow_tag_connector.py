@@ -64,7 +64,7 @@ class tag_data:
         """
         returns current time - given paramater 'days'
         """
-        return (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+        return (datetime.now() - timedelta(days=int(days))).strftime('%Y-%m-%d %H:%M:%S')
 
     
     @handle_exception
