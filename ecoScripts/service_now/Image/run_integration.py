@@ -16,7 +16,7 @@ def main():
     kafka_port = os.getenv('KAFKA_PORT')
     kafka_input_topic = os.getenv('KAFKA_INPUT_TOPIC')
     kafka_output_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
-    kafka_error_topic = "error-" + kafka_input_topic + "-" + kafka_output_topic
+    kafka_error_topic = "error_" + kafka_input_topic
     es_host = os.getenv('ES_HOSTNAME')
     es_port = os.getenv('ES_PORT')
 

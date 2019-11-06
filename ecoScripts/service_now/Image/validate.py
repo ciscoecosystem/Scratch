@@ -139,8 +139,9 @@ def test_kafka():
     out_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
 
     # offset_topic = os.getenv("KAFKA_OFFSET_TOPIC")
-    offset_topic = "offset-" + inp_topic + "-" + out_topic
-    error_topic = "error-" + inp_topic + "-" + out_topic
+    offset_topic = "offset_" + inp_topic + "_" + out_topic
+    input_error_topic = "error_" + inp_topic
+    output_error_topic = "error_" + out_topic
 
     try:
         host = '{}:{}'.format(kafka_ip, kafka_port)
@@ -151,7 +152,7 @@ def test_kafka():
         pigeon.sendInfoMessage("Testing Kafka Input/Output topic")
 
         broker_topics = simple_client.topic_partitions
-        data_topics = [inp_topic, out_topic, offset_topic, error_topic]
+        data_topics = [inp_topic, out_topic, offset_topic, input_error_topic, output_error_topic]
         topic_exists = False
         for curr_topic in data_topics:
             if curr_topic:

@@ -38,12 +38,12 @@ def main():
     logger.info("Starting consumer")
 
     logger.info("Starting APIC cookie thread")
-    apic_thread = consumer._app_threads.APICThread(exit, lock)
+    apic_thread = consumer.app_threads.APICThread(exit, lock)
     apic_thread.start()
     logger.info("APIC cookie thread started successfully")
 
     logger.info("Starting Kafka consumer thread")
-    epg_thread = consumer._app_threads.ConsumerThread(exit, lock)
+    epg_thread = consumer.app_threads.ConsumerThread(exit, lock)
     epg_thread.start()
     logger.info("Consumer thread started successfully")
 
