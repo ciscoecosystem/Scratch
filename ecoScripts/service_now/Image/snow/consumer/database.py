@@ -127,7 +127,7 @@ class Database:
         """
         if identifier == 'id':
             filter = {'_id': name}
-        elif identifier == 'name' and tenant and ap:
+        elif identifier == 'name':
             filter = {'name': name}
         # TODO remove membership from old EPG if endpoint was previously in different EPG
         # logger.debug("Adding endpoint {} to EPG {}".format(ep_id, epg_name))
@@ -144,38 +144,41 @@ class Database:
 
     ##### Contract Collection #####
 
-    def add_contract(self, role, epg_ids, contract_id):
+    def add_contract(self, role, epg_id, contract_id):
         """Add contract to EPG document as provider or consumer"""
         assert role == 'consumed' or role == 'provided'
 
         collection = self.db['epgs']
-        collection.update_one({'_id': {'$in': epg_ids}}, {'$addToSet': {role: contract_id}})
+        collection.update_one({'_id': epg_id}, {'$addToSet': {role: contract_id}})
 
-    def add_contract_by_name(self, role, epg_names, contract_id):
+
+    def add_contract_by_name(self, role, epg_name, contract_id):
         """Add contract to EPG document as provider or consumer"""
         assert role == 'consumed' or role == 'provided'
 
         collection = self.db['epgs']
-        collection.update_one({'name': {'$in': epg_names}}, {'$addToSet': {role: contract_id}})
+        collection.update_one({'name': epg_name}, {'$addToSet': {role: contract_id}})
 
-    def remove_contract(self, role, epg_ids, contract_id):
+
+    def remove_contract(self, role, epg_id, contract_id):
         """Remove contract from EPG document"""
         assert role == 'consumed' or role == 'provided'
 
         collection = self.db['epgs']
-        collection.update_many({'_id': {'$in': epg_ids}}, {'$pullAll': {role: [contract_id]}})
+        collection.update_many({'_id': epg_id}, {'$pullAll': {role: [contract_id]}})
+
 
     def remove_contract_by_name(self, role, epg_name, contract_id):
         """Remove contract from EPG document"""
         assert role == 'consumed' or role == 'provided'
 
         collection = self.db['epgs']
-        collection.update_many({'name': {'$in': epg_name}}, {'$pullAll': {role: [contract_id]}})
+        collection.update_many({'name': epg_name}, {'$pullAll': {role: [contract_id]}})
 
     def update_contract_filter(self, name, aci_filter, entries, identifier='id'):
         if identifier == 'id':
             filter = {'_id': name}
-        elif identifier == 'name' and tenant and ap:
+        elif identifier == 'name':
             filter = {'name': name}
         else:
             return
@@ -194,13 +197,13 @@ class Database:
 
         if identifier == 'id':
             filter = {'_id': name}
-        elif identifier == 'name' and tenant and ap:
+        elif identifier == 'name':
             filter = {'name': name}
         else:
             return
 
         if remove:
-            update = {'$pullAll': {role: removed}}
+            update = {'$pullAll': {role: remove}}
         else:
             update = {'$set': {role: update}}
 
@@ -218,12 +221,14 @@ class Database:
         collection = self.db['contracts']
         return collection.find_one(filter=filter)
 
+
     def insert_contract(self, doc):
         collection = self.db['contracts']
         collection.insert_one(doc)
-
+        # Below is to maintain the count of contracts
         collection_contract_count = self.db['contractCount']
         collection_contract_count.insert_one(doc)
+
 
     def count_contracts(self):
         count = self.db['contractCount'].count_documents({})
@@ -251,6 +256,7 @@ class Database:
 
         collection = self.db['filters']
         return collection.find_one(filter=filter)
+
 
     def insert_filter(self, name, tenant, entries):
         document = {'_id': name, 'tenant': tenant, 'entries': entries}

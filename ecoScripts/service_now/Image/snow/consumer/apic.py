@@ -39,6 +39,7 @@ class APIC:
 
         if protocol != 'https' and protocol != 'http':
             pass # TODO raise error
+            # TODO Mohit - Ask above message
         else:
             self.base_url = "{0}://{1}".format(protocol, apic_host)
 

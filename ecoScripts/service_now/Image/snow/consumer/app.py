@@ -11,7 +11,7 @@ from .. import consumer
 from ..logger import Logger
 
 exit = threading.Event() # condition in all looping threads, exit when set
-lock = threading.Lock() # global lock for the consumer; does not impact performance due to Cython GIL
+lock = threading.Lock() # global lock for the consumer; does not impact performance due to Python GIL
 # necessary for any shared resources between threads
 # currently used to prevent two threads from getting different APIC sessions
 # REVIEW do not believe it is necessary for get_logger()
@@ -38,12 +38,12 @@ def main():
     logger.info("Starting consumer")
 
     logger.info("Starting APIC cookie thread")
-    apic_thread = consumer.app_threads.APICThread(exit, lock)
+    apic_thread = consumer._app_threads.APICThread(exit, lock)
     apic_thread.start()
     logger.info("APIC cookie thread started successfully")
 
     logger.info("Starting Kafka consumer thread")
-    epg_thread = consumer.app_threads.ConsumerThread(exit, lock)
+    epg_thread = consumer._app_threads.ConsumerThread(exit, lock)
     epg_thread.start()
     logger.info("Consumer thread started successfully")
 
