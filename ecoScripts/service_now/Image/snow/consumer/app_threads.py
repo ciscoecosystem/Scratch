@@ -281,10 +281,12 @@ class ConsumerThread(AuroraThread):
                     self.logger.info('Epg does not exist')
                 else:
                     props['name'] = epg['name']
-                    self.db.delete_epg(props['_id'])
-                    for member in props['members']:
+                    # The message is received from beam do not have 'members' in it
+                    # thus fetch members from db
+                    for member in self.db.get_epg(props['_id'])['members']:
                         self.db.delete_endpoint(member)
                     self.logger.info("Deleted EPG {} and its EP in DB".format(props['name']))
+                    self.db.delete_epg(props['_id'])
                     epg_response = self.create_epg(tenant, ap, epg['name'], delete=True)
                     if epg_response == 'Successful':
                         self.logger.info('Successfully deleted grouping from APIC')
