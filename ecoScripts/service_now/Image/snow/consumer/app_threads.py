@@ -166,7 +166,7 @@ class ConsumerThread(AuroraThread):
             else:
                 self.logger.error("Received invalid message type")
         except CheckpointException as e:
-            self.logger.exception("Dumping message to error topic {}".format(str(e.data)))
+            self.logger.error("Dumping message to error topic {}".format(str(e.data)))
             self.producer.send(self.config['kafka_error_topic'], value=e.data)
 
 
@@ -187,7 +187,7 @@ class ConsumerThread(AuroraThread):
                     if ep_res == 'Successful':
                         self.logger.info('Successfully created EP in APIC')
                     else:
-                        self.logger.info('EP creation failed for EP {}, Error: {}'.format(endpoint, ep_res))
+                        self.logger.error('EP creation failed for EP {}, Error: {}'.format(endpoint, ep_res))
                         raise CheckpointException('EP', 'APIC', props, ep_res)
                 else:
                     self.db.update_endpoint(props['_id'], {'$set': props})
@@ -206,7 +206,7 @@ class ConsumerThread(AuroraThread):
                         if ep_res == 'Successful':
                             self.logger.info('Successfully created EP in APIC')
                         else:
-                            self.logger.info('EP creation failed for EP {}, Error: {}'.format(endpoint, ep_res))
+                            self.logger.error('EP creation failed for EP {}, Error: {}'.format(endpoint, ep_res))
                             raise CheckpointException('EP', 'APIC', props, ep_res)
                     else:
                         # This will occure when EP is updated apart from its EPG
@@ -225,7 +225,7 @@ class ConsumerThread(AuroraThread):
                     if ep_res == 'Successful':
                         self.logger.info('Successfully deleted EP in APIC')
                     else:
-                        self.logger.info('EP deletion failed for EP {}, Error: {}'.format(endpoint, ep_res))
+                        self.logger.error('EP deletion failed for EP {}, Error: {}'.format(endpoint, ep_res))
                         raise CheckpointException('EP', 'APIC', props, ep_res)
             else:
                 self.logger.error("Could not process EP because the status is: {}".format(status))
@@ -334,7 +334,7 @@ class ConsumerThread(AuroraThread):
                     if filter_response == 'Successful':
                         self.logger.info('Successfully created filter')
                     else:
-                        self.logger.info('Filter creation failed, Error: {}'.format(filter_name))
+                        self.logger.error('Filter creation failed, Error: {}'.format(filter_name))
                         raise CheckpointException('Contract', 'APIC', props, filter_response)
 
                 props['filter_name'] = filter_name
@@ -365,7 +365,7 @@ class ConsumerThread(AuroraThread):
                     if contract_response == 'Successful':
                         self.logger.info('Successfully created contract')
                     else:
-                        self.logger.info('Contract creation failed, Error: {}'.format(contract_response))
+                        self.logger.error('Contract creation failed, Error: {}'.format(contract_response))
                         raise CheckpointException('Contract', 'APIC', props, contract_response)
 
                     # For attaching contracts to EPGs
@@ -381,7 +381,7 @@ class ConsumerThread(AuroraThread):
                     if attach_contract_response == 'Successful':
                         self.logger.info('Successfully attached contract')
                     else:
-                        self.logger.info('Contract creation failed, Error: {}'.format(attach_contract_response))
+                        self.logger.error('Contract creation failed, Error: {}'.format(attach_contract_response))
                         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
 
                     self.db.add_contract_by_name('provided', added_prov, contract['_id'])
@@ -391,7 +391,7 @@ class ConsumerThread(AuroraThread):
                     if attach_contract_response == 'Successful':
                         self.logger.info('Successfully attached contract')
                     else:
-                        self.logger.info('Contract creation failed, Error: {}'.format(attach_contract_response))
+                        self.logger.error('Contract creation failed, Error: {}'.format(attach_contract_response))
                         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
 
                 """
@@ -494,14 +494,14 @@ class ConsumerThread(AuroraThread):
                     if attach_contract_response == 'Successful':
                         self.logger.info('Successfully attached contract')
                     else:
-                        self.logger.info('Contract deletion failed, Error: {}'.format(attach_contract_response))
+                        self.logger.error('Contract deletion failed, Error: {}'.format(attach_contract_response))
                         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
 
                     attach_contract_response = self.attach_contract('provided', tenant, ap, removed_prov, contract['name'], delete=True)
                     if attach_contract_response == 'Successful':
                         self.logger.info('Successfully attached contract')
                     else:
-                        self.logger.info('Contract deletion failed, Error: {}'.format(attach_contract_response))
+                        self.logger.error('Contract deletion failed, Error: {}'.format(attach_contract_response))
                         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
 
                     props['name'] = contract['name']
@@ -509,7 +509,7 @@ class ConsumerThread(AuroraThread):
                     if contract_response == 'Successful':
                         self.logger.info('Successfully deleted contract')
                     else:
-                        self.logger.info('Contract deletion failed, Error: {}'.format(contract_response))
+                        self.logger.error('Contract deletion failed, Error: {}'.format(contract_response))
                         raise CheckpointException('Contract', 'APIC', props, contract_response)
 
             else:
