@@ -191,7 +191,7 @@ class ConsumerThread(AuroraThread):
                         raise CheckpointException('EP', 'APIC', props, ep_res)
                 else:
                     self.db.update_endpoint(props['_id'], {'$set': props})
-                    self.logger.info("Updated endpoint {}".format(props['name']))
+                    self.logger.info("Updated endpoint {} in DB".format(props['name']))
 
                     if props['epg'] != endpoint['epg']:
                         # For update, first delete and then create
@@ -284,9 +284,10 @@ class ConsumerThread(AuroraThread):
                     # The message is received from beam do not have 'members' in it
                     # thus fetch members from db
                     for member in self.db.get_epg(props['_id'])['members']:
-                        self.db.delete_endpoint(member)
-                    self.logger.info("Deleted EPG {} and its EP in DB".format(props['name']))
+                        self.db.delete_endpoint(member, identifier='name')
+                        self.logger.info("Deleted EP {} from DB".format(member))
                     self.db.delete_epg(props['_id'])
+                    self.logger.info("Deleted EPG {} and its EP in DB".format(props['name']))
                     epg_response = self.create_epg(tenant, ap, epg['name'], delete=True)
                     if epg_response == 'Successful':
                         self.logger.info('Successfully deleted grouping from APIC')
