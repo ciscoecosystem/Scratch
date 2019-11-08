@@ -220,7 +220,7 @@ class snow_data:
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time)
                 self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep', data_producer)
                 # TODO: validate need of time.sleep(1)
-                time.sleep(1)
+                # time.sleep(1)
 
                 # TODO: remove query below
                 if str(last_query_time) != str(self.initial_offset):
@@ -228,12 +228,12 @@ class snow_data:
                 else:
                     query = ''
                 self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False, 'reltype', data_producer)
-                time.sleep(1)
+                # time.sleep(1)
 
                 # TODO: remove type.sys_id filter from the below query and rel type should also be configurable by customer
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(last_query_time, current_query_time)
                 self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel', data_producer)
-                time.sleep(1)
+                # time.sleep(1)
 
                 if str(last_query_time) != str(self.initial_offset):
                     query = self.form_query('sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time))
