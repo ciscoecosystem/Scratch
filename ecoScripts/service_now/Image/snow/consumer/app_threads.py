@@ -128,14 +128,14 @@ class ConsumerThread(AuroraThread):
         self.logger.info("Waiting for messages from Kafka")
         while not self.exit.is_set():
             msg_pack = self.consumer.poll()
+            # This is for commit sync in Kafka.
+            self.consumer.commit()
             for tp, messages in msg_pack.items():
                 for msg in messages:
                     self.logger.info("Received message from Kafka")
                     self.process_message(msg)
                     if self.exit.is_set():
                         break
-            # This is for commit sync in Kafka.
-            self.consumer.commit()
         self.logger.info("Closing Kafka consumer")
         self.consumer.close()
         self.logger.info("Consumer thread exited succesfully")
