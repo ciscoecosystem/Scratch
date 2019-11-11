@@ -1,3 +1,11 @@
+"""
+TODO:
+1. Writing to Error topic should be configurable/optional. A flag should be set true/false.
+2. Add comments with format expected for every message
+3. Transfer all the APIC api caller function to another file
+4. Create a overloader function to all the API call functions. It should check for the status and pass Success or faliure message
+"""
+
 import json
 import os
 import threading
@@ -8,6 +16,7 @@ import pymongo.errors
 import requests
 import yaml
 from kafka import KafkaConsumer
+from kafka import KafkaProducer
 from pymongo import MongoClient
 
 # absolute import
@@ -46,7 +55,7 @@ class APICThread(AuroraThread):
             apic.logger.error('Unable to login into APIC.  Error: {}'.format(login_response.text))
             apic.logger.error("Shutting down")
             self.exit.set()
-            return  # TODO figure out how to possibly retry etc
+            return
 
         self.exit.wait(270) # initial login just occurred, no need to refresh immediately; essentially a do-while
         while not self.exit.is_set():
@@ -56,6 +65,18 @@ class APICThread(AuroraThread):
         apic.logout()
         apic.close()
         self.logger.info("APIC thread exited succesfully")
+
+
+class CheckpointException(Exception):
+    """Raise exception with the checkpointing message"""
+
+    def __init__(self,  error_type, final_dest, msg, error_msg):
+        self.data = {
+            'error_type' : error_type,
+            'final_dest' : final_dest,
+            'msg'        : msg,
+            'error_msg'  : error_msg
+        }
 
 
 class ConsumerThread(AuroraThread):
@@ -77,6 +98,7 @@ class ConsumerThread(AuroraThread):
         self.config['mongo_port'] = int(os.getenv('MONGO_PORT'))
         self.config['kafka_topic'] = os.getenv('KAFKA_OUTPUT_TOPIC')
         self.config['kafka_ip'] = os.getenv('KAFKA_HOSTNAME')
+        self.config['kafka_error_topic'] = 'error_' + self.config['kafka_topic']
 
     def run(self):
         self.logger.info("Reading configuration from file")
@@ -84,8 +106,12 @@ class ConsumerThread(AuroraThread):
 
         try:
             self.logger.info("Connecting to Kafka server")
-            self.consumer = KafkaConsumer(self.config['kafka_topic'], bootstrap_servers=self.config['kafka_ip'], auto_offset_reset='earliest')
+            self.consumer = KafkaConsumer(self.config['kafka_topic'], bootstrap_servers=self.config['kafka_ip'], auto_offset_reset='earliest', group_id='test')
             self.logger.info("Successfully connected to Kafka")
+
+            self.logger.info("Creating Kafka Producer")
+            self.producer = KafkaProducer(bootstrap_servers=self.config['kafka_ip'], value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+            self.logger.info("Successfully created Kafka Producer")
 
             self.logger.info("Connecting to MongoDB")
             self.db = Database(host=self.config['mongo_host'], port=self.config['mongo_port'])
@@ -102,14 +128,14 @@ class ConsumerThread(AuroraThread):
         self.logger.info("Waiting for messages from Kafka")
         while not self.exit.is_set():
             msg_pack = self.consumer.poll()
+            # This is for commit sync in Kafka.
+            self.consumer.commit()
             for tp, messages in msg_pack.items():
                 for msg in messages:
                     self.logger.info("Received message from Kafka")
                     self.process_message(msg)
                     if self.exit.is_set():
                         break
-            # self.consumer.commit_async()
-            # TODO figure out if need for commits, no need if not using consumer group_id
         self.logger.info("Closing Kafka consumer")
         self.consumer.close()
         self.logger.info("Consumer thread exited succesfully")
@@ -118,263 +144,381 @@ class ConsumerThread(AuroraThread):
         """Take msg as string and get dictionary
         Do basic key/value processing and call appropriate function for message type
         """
-        props = json.loads(msg.value)
-        props['_id'] = props['uuid']
-        status = props['status']
-        msg_type = props['msg_type']
-        del props['uuid'], props['status'], props['msg_type']
+        try:
+            try:
+                props = json.loads(msg.value)
+                props['_id'] = props['uuid']
+                status = props['status']
+                msg_type = props['msg_type']
+                del props['uuid'], props['status'], props['msg_type']
+            except Exception as e:
+                raise CheckpointException('Parsing', 'APIC and DB', msg, "Some error occured while processing endpoint message, Error: {}".format(str(e)))
 
-        if msg_type == 'ep':
-            self.logger.info("Received endpoint message")
-            self.process_endpoint_message(props, status)
-        elif msg_type == 'epg':
-            self.logger.info("Received grouping message")
-            self.process_grouping_message(props, status)
-        elif msg_type == 'contract':
-            self.logger.info("Received contract message")
-            self.process_contract_message(props, status)
-        else:
-            self.logger.error("Received invalid message type")
+            if msg_type == 'ep':
+                self.logger.info("Received endpoint message")
+                self.process_endpoint_message(props, status)
+            elif msg_type == 'epg':
+                self.logger.info("Received grouping message")
+                self.process_grouping_message(props, status)
+            elif msg_type == 'contract':
+                self.logger.info("Received contract message")
+                self.process_contract_message(props, status)
+            else:
+                self.logger.error("Received invalid message type")
+        except CheckpointException as e:
+            self.logger.error("Dumping message to error topic {}".format(str(e.data)))
+            self.producer.send(self.config['kafka_error_topic'], value=e.data)
+
 
     def process_endpoint_message(self, props, status):
         """Process endpoint message"""
-        if status == 'create' or status == 'update':
 
-            endpoint = self.db.get_endpoint(props['_id'])
-            if not endpoint:
-                self.db.insert_endpoint(props)
-                self.logger.info("Added endpoint {} to DB".format(props['name']))
+        try:
+            tenant = self.config['tenant']
+            ap = self.config['application_profile']
+
+            if status == 'create' or status == 'update':
+                endpoint = self.db.get_endpoint(props['_id'])
+                if not endpoint:
+                    self.db.insert_endpoint(props)
+                    self.logger.info("Added endpoint {} to DB".format(props['name']))
+
+                    ep_res = self.create_ep(tenant, ap, self.db.get_epg(props['epg'])['name'], props)
+                    if ep_res == 'Successful':
+                        self.logger.info('Successfully created EP in APIC')
+                    else:
+                        self.logger.error('EP creation failed for EP {}, Error: {}'.format(endpoint, ep_res))
+                        raise CheckpointException('EP', 'APIC', props, ep_res)
+                else:
+                    self.db.update_endpoint(props['_id'], {'$set': props})
+                    self.logger.info("Updated endpoint {} in DB".format(props['name']))
+
+                    if props['epg'] != endpoint['epg']:
+                        # For update, first delete and then create
+                        ep_res_del = self.create_ep(tenant, ap, self.db.get_epg(endpoint['epg'])['name'], props, delete=True)
+                        if ep_res_del == 'Successful':
+                            self.logger.info('Successfully deleted EP in APIC')
+                        else:
+                            self.logger.info('EP deletion failed for EP {}, Error: {}'.format(endpoint, ep_res_del))
+                            raise CheckpointException('EP', 'APIC', props, ep_res_del)
+
+                        ep_res = self.create_ep(tenant, ap, self.db.get_epg(props['epg'])['name'], props)
+                        if ep_res == 'Successful':
+                            self.logger.info('Successfully created EP in APIC')
+                        else:
+                            self.logger.error('EP creation failed for EP {}, Error: {}'.format(endpoint, ep_res))
+                            raise CheckpointException('EP', 'APIC', props, ep_res)
+                    else:
+                        # This will occure when EP is updated apart from its EPG
+                        # TODO: API to update the updated EP
+                        pass
+
+            elif status == 'delete':
+                endpoint = self.db.get_endpoint(props['_id'])
+                self.db.delete_endpoint(props['_id'])
+                self.logger.info("Deleted endpoint {} in DB".format(props['name']))
+
+                if not endpoint:
+                    self.logger.info("Endpoint does not exist")
+                else:
+                    ep_res = self.create_ep(tenant, ap, self.db.get_epg(endpoint['epg'])['name'], props, delete=True)
+                    if ep_res == 'Successful':
+                        self.logger.info('Successfully deleted EP in APIC')
+                    else:
+                        self.logger.error('EP deletion failed for EP {}, Error: {}'.format(endpoint, ep_res))
+                        raise CheckpointException('EP', 'APIC', props, ep_res)
             else:
-                self.db.update_endpoint(props['_id'], {'$set': props})
-                self.logger.info("Updated endpoint {}".format(props['name']))
-        elif status == 'delete':
-            endpoint = self.db.get_endpoint(props['_id'])
-            self.db.delete_endpoint(props['_id'])
-            self.logger.info("Deleted endpoint {}".format(props['name']))
-            self.db.update_epg_membership(endpoint['epg'], [props['_id']], remove=True)
-            self.logger.info("Removed endpoint {} from EPG {} in DB".format(props['name'], endpoint['epg']))
-        else:
-            pass # TODO possibly error handle if msg is bad?
+                self.logger.error("Could not process EP because the status is: {}".format(status))
+                raise CheckpointException('EP', 'APIC and DB', props, "Status of EP is {}, expected: create/update/delete".format(status))
+        except CheckpointException as e:
+            raise e
+        except Exception as e:
+            raise CheckpointException('EP', 'APIC and DB', props, "Some error occured while processing endpoint message, Error: {}".format(str(e)))
+
 
     def process_grouping_message(self, props, status):
         """Process grouping message"""
-        tenant = self.config['tenant']
-        ap = self.config['application_profile']
 
-        if status == 'create' or status == 'update':
-            create_eps = True
-            epg = self.db.get_epg(props['_id']) # get existing app state for EPG
+        try:
+            tenant = self.config['tenant']
+            ap = self.config['application_profile']
 
-            # Store endpoint membership with EP uuid instead of sys_id
-            # REVIEW currently checks for incorrect message order, not needed if msg source is reliable
-            sysid_to_uuid = lambda x: self.db.get_endpoint(x, identifier='sys_id')['_id']
-            try:
-                props['members'] = list(map(sysid_to_uuid, props['members']))
-            except KeyError as error:
-                create_eps = False
-                self.logger.warning("EPG created before member EPs")
+            if status == 'create' or status == 'update':
+                # get EPG if exists
+                epg = self.db.get_epg(props['_id'])
+                if not epg:
+                    # Creatin new EPG in DB and APIC
+                    epg_count = self.db.count_epgs()
+                    epg_count = epg_count + 1
+                    epg_name = "EPG_" + str(epg_count)
+                    props['name'] = epg_name
+                    props['consumed'] = [] # for db
+                    props['provided'] = [] # for db
+                    self.db.insert_epg(props)
+                    self.logger.info("Inserted EPG {} in DB".format(props['name']))
 
-            if not epg:  # no previous state; creation of new EPG
-                epg_count = self.db.count_epgs()
-                epg_count = epg_count + 1
-                epg_name = "EPG_" + str(epg_count)
-                props['name'] = epg_name
+                    epg_response = self.create_epg(tenant, ap, props['name'])
+                    if epg_response == 'Successful':
+                        self.logger.debug("Created EPG {} on APIC".format(props['name']))
+                    else:
+                        self.logger.debug(epg_response)
+                        raise CheckpointException('Grouping/EPG', 'APIC', props, epg_response)
+                else:
+                    # Update existing EPG's members in DB
+                    # EP gets updated in APIC when they are added or removed from APIC
+                    props['name'] = epg['name']
+                    prev = set(epg['members'])
+                    update = set(props['members'])
+                    if prev != update:
+                        self.logger.info("Updating {} membership".format(props['name']))
+                        self.db.update_epg_membership(props['_id'], props['members'])
+                        self.logger.info("Updated EPG {} in DB".format(props['name']))
+                    else:
+                        self.logger.info("EPG {} already exists".format(props['name']))
+            elif status == 'delete':
+                epg = self.db.get_epg(props['_id'])
+                if not epg:
+                    self.logger.info('Epg does not exist')
+                else:
+                    props['name'] = epg['name']
+                    # The message is received from beam do not have 'members' in it
+                    # thus fetch members from db
+                    for member in self.db.get_epg(props['_id'])['members']:
+                        self.db.delete_endpoint(member, identifier='name')
+                        self.logger.info("Deleted EP {} from DB".format(member))
+                    self.db.delete_epg(props['_id'])
+                    self.logger.info("Deleted EPG {} and its EP in DB".format(props['name']))
+                    epg_response = self.create_epg(tenant, ap, epg['name'], delete=True)
+                    if epg_response == 'Successful':
+                        self.logger.info('Successfully deleted grouping from APIC')
+                    else:
+                        self.logger.debug(epg_response)
+                        raise CheckpointException('Grouping/EPG', 'APIC', props, epg_response)
+            else:
+                self.logger.error("Could not process Group because the status is: {}".format(status))
+                raise CheckpointException('EPG', 'APIC and DB', props, "Status of EPG is {}, expected: create/update/delete")
+        except CheckpointException as e:
+            raise e
+        except Exception as e:
+            raise CheckpointException('EPG', 'APIC and DB', props, "Some error occured while processing grouping message, Error: {}".format(str(e)))
 
-                self.create_epg(tenant, ap, props['name'])
-                self.logger.info("Created EPG {} on APIC".format(props['name']))
-                props['consumed'] = []
-                props['provided'] = []
-                self.db.insert_epg(props)
-                if create_eps:
-                    for member in props['members']:
-                        endpoint = self.db.get_endpoint(member)
-                        self.create_ep(tenant, ap, props['name'], endpoint)
-                self.logger.info("Added endpoint {} to DB".format(props['name']))
-            else: # update existing EPG
-
-                # TODO change EPG setting on APIC if applicable
-                # pseudocode
-                # if epg_info_changed():
-                #     make_apic_call() # for now, EPG is defined by name only, no changes to make
-                #     update_db_entry()
-
-                # update membership in database
-                # TODO update config on APIC, currently app has no concept of EPs on APIC
-                props['name'] = epg['name']
-                prev = set(epg['members'])
-                update = set(props['members'])
-                if prev != update:
-                    self.logger.info("Updating {} membership".format(props['name']))
-                    removed = prev - update
-                    added = update - prev
-                    self.db.update_epg_membership(props['_id'], props['members'])
-                    self.logger.info("Updated EPG {} in DB".format(props['name']))
-
-                    # TODO update endpoints on APIC, using `removed` and `added`
-                    for id in removed:
-                        self.db.update_endpoint(id, {'$set': {'epg': ''}})
-                        self.logger.info("Removed grouping for endpoint {}".format(id))
-                    for id in added:
-                        endpoint = self.db.get_endpoint(id)
-                        self.create_ep(tenant, ap, props['name'], endpoint)
-                        if endpoint['epg'] != props['_id']: # disassociate EP from previous EPG
-                            self.db.update_epg_membership(endpoint['epg'], [id], remove=True)
-                            self.logger.info("Removed {} from EPG {}".format(id, endpoint['epg']))
-                            self.db.update_endpoint(id, {'$set': {'epg': props['_id']}})
-                        self.logger.info("Updated grouping for endpoint {}".format(id))
-
-        elif status == 'delete':
-            # self.create_epg(tenant, ap, props['name'], delete=True)
-            # remove EPG from related contract DB entries
-            epg = self.db.get_epg(props['_id'])
-            props['name'] = epg['name']
-            self.create_epg(tenant, ap, epg['name'], delete=True)
-            for contract in epg['consumed']:
-                self.db.update_contract_membership(contract, 'consumed', [props['id']], remove=True)
-            for contract in epg['provided']:
-                self.db.update_contract_membership(contract, 'provided', [props['id']], remove=True)
-            self.logger.info("Removed contracts from EPG {}".format(props['name']))
-
-            # TODO possibly modify endpoint entries in DB
-            for ep in epg['members']:
-                self.db.update_endpoint(ep, {'$set': {'epg': ''}})
-            self.logger.info('Updated endpoint grouping entries in DB')
-
-            self.db.delete_epg(props['_id'])
-            self.logger.info("Deleted endpoint {} in DB".format(props['name']))
-        else:
-            pass # TODO possibly error handle if msg is bad
 
     def process_contract_message(self, props, status):
-        tenant = self.config['tenant']
-        ap = self.config['application_profile']
+        """Process contract message"""
 
-        if status == 'create' or status == 'update':
+        try:
+            tenant = self.config['tenant']
+            ap = self.config['application_profile']
 
-            # TODO determine if/how/what filter info will contain
-            if 'filter_entries' not in props: # TODO figure out filter_entries, current messages missing field
-                props['filter_entries'] = "ANY"
-            if 'action' not in props:
-                props['action'] = 'deny'
+            if status == 'create' or status == 'update':
+                # TODO determine if/how/what filter info will contain
+                if 'filter_entries' not in props: # TODO figure out filter_entries, current messages missing field
+                    props['filter_entries'] = "ANY"
+                if 'action' not in props:
+                    props['action'] = 'deny'
 
-            # find filter
-            if props['filter_entries'] == "ANY":
-                filter_name = tenant + "-any"
+                # find filter
+                if props['filter_entries'] == "ANY":
+                    filter_name = tenant + "-any"
+                else:
+                    # REVIEW current naming scheme below limited; filter names on apic limited to 64 characters
+                    # TODO revise naming below depending on msg format for filter entries
+                    filter_name = "-".join([tenant] + list(map(str, props['filter_entries'])))
+
+                filter = self.db.get_filter(filter_name)
+                if not filter: # create filter in APIC as well as DB
+                    self.db.insert_filter(filter_name, tenant, props['filter_entries'])
+                    self.logger.info("Inserted filter {} to DB".format(filter_name))
+
+                    filter_response = self.create_filter(tenant, filter_name, props['filter_entries'])
+                    if filter_response == 'Successful':
+                        self.logger.info('Successfully created filter')
+                    else:
+                        self.logger.error('Filter creation failed, Error: {}'.format(filter_name))
+                        raise CheckpointException('Contract', 'APIC', props, filter_response)
+
+                props['filter_name'] = filter_name
+
+                # REVIEW what is `action` options in msg
+                if props['action'] == 'ALLOW':
+                    props['action'] = 'permit'
+
+                # Getting EPG name stored in DB using the uuid and put it into props
+                consumer_epg_name = self.db.get_epg(props['consumer_epg'])
+                provider_epg_name = self.db.get_epg(props['provider_epg'])
+                props['consumer_epg'] = consumer_epg_name['name']
+                props['provider_epg'] = provider_epg_name['name']
+
+                # `contract` represents old entry in DB
+                # `props` represents new to be updated entry
+                contract = self.db.get_contract(props['_id'], identifier='id')
+                if not contract:
+                    contract_count = self.db.count_contracts()
+                    contract_count = contract_count + 1
+                    contract_name = "CONTRACT_" + str(contract_count)
+                    props['name'] = contract_name
+                    contract = props
+                    self.db.insert_contract(props)
+                    self.logger.info("Inserted contract {} in DB".format(props['name']))
+
+                    contract_response = self.create_contract(tenant, props['name'], filter_name, props['action'])
+                    if contract_response == 'Successful':
+                        self.logger.info('Successfully created contract')
+                    else:
+                        self.logger.error('Contract creation failed, Error: {}'.format(contract_response))
+                        raise CheckpointException('Contract', 'APIC', props, contract_response)
+
+                    # For attaching contracts to EPGs
+                    added_con = contract['consumer_epg']
+                    added_prov = contract['provider_epg']
+                    # removed_con = None
+                    # removed_prov = None
+
+                    self.db.add_contract_by_name('consumed', added_con, contract['_id'])
+                    self.logger.info("Contract {} added to DB".format(added_con))
+
+                    attach_contract_response = self.attach_contract('consumed', tenant, ap, added_con, contract['name'])
+                    if attach_contract_response == 'Successful':
+                        self.logger.info('Successfully attached contract')
+                    else:
+                        self.logger.error('Contract creation failed, Error: {}'.format(attach_contract_response))
+                        raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
+
+                    self.db.add_contract_by_name('provided', added_prov, contract['_id'])
+                    self.logger.info("Contract {} added to DB".format(added_prov))
+
+                    attach_contract_response = self.attach_contract('provided', tenant, ap, added_prov, contract['name'])
+                    if attach_contract_response == 'Successful':
+                        self.logger.info('Successfully attached contract')
+                    else:
+                        self.logger.error('Contract creation failed, Error: {}'.format(attach_contract_response))
+                        raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
+
+                """
+                Code needed to avoid update of a contract. No need for contract update usecse in AURORA.
+                """
+                # elif props['consumer_epg'] == contract['consumer_epg'] and props['provider_epg'] == contract['provider_epg']:
+                #     self.logger.info("Contract already exists")
+                #     added_con = None
+                #     added_prov = None
+                #     removed_con = None
+                #     removed_prov = None
+
+                """
+                Below line of code is not rechable because a contraact will never be updated as per the present implementaion.
+                Useful only when there is many to many relationships for a Contract.
+                """
+                # else:
+                #     props['name'] = contract['name']
+                #     # update filter entry
+                #     if filter_name != contract['filter_name']:
+                #         change_filter_res = self.change_contract_filter(tenant, props['name'], filter_name, contract['filter_name'],
+                #                                     props['action'])
+                #         if change_filter_res == 'Successful':
+                #             self.logger.info('Successfully updated contract filter')
+                #         else:
+                #             self.logger.info('Contract creation failed, Error: {}'.format(change_filter_res))
+                #             raise CheckpointException('Contract', 'APIC', props, change_filter_res)
+                #         self.db.update_contract_filter(props['_id'], filter_name, props['filter_entries'])
+
+                #     # update consumer/provider
+                #     self.db.update_contract_membership(props['_id'], 'consumed', props['consumer_epg'])
+                #     self.db.update_contract_membership(props['_id'], 'provided', props['provider_epg'])
+                #     self.logger.info("Determining contract cons/prov updates")
+
+                #     # For attaching new contract to EPG and removing the old contracts
+                #     added_con = props['consumer_epg']
+                #     added_prov = props['provider_epg']
+                #     removed_con = contract['consumer_epg'] if not props['consumer_epg'] == contract['consumer_epg'] else None
+                #     removed_prov = contract['provider_epg'] if not props['provider_epg'] == contract['provider_epg'] else None
+
+                """
+                Code neede with above elif and else conditions only!
+                """
+                # # attach contract consumer/producer on APIC
+                # # associate contracts to EPG entries in database
+                # # assuming epgs are already created
+                # if added_con:
+                #     self.db.add_contract_by_name('consumed', added_con, contract['_id'])
+                #     attach_contract_response = self.attach_contract('consumed', tenant, ap, added_con, contract['name'])
+                #     if attach_contract_response == 'Successful':
+                #         self.logger.info('Successfully attached contract')
+                #     else:
+                #         self.logger.info('Contract creation failed, Error: {}'.format(attach_contract_response))
+                #         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
+
+                # if added_prov:
+                #     self.db.add_contract_by_name('provided', added_prov, contract['_id'])
+                #     attach_contract_response = self.attach_contract('provided', tenant, ap, added_prov, contract['name'])
+                #     if attach_contract_response == 'Successful':
+                #         self.logger.info('Successfully attached contract')
+                #     else:
+                #         self.logger.info('Contract creation failed, Error: {}'.format(attach_contract_response))
+                #         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
+
+                # if removed_con:
+                #     self.db.remove_contract_by_name('consumed', removed_con, contract['_id'])
+                #     attach_contract_response = self.attach_contract('consumed', tenant, ap, removed_con, contract['name'], delete=True)
+                #     if attach_contract_response == 'Successful':
+                #         self.logger.info('Successfully attached contract')
+                #     else:
+                #         self.logger.info('Contract deletion failed, Error: {}'.format(attach_contract_response))
+                #         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
+
+                # if removed_prov:
+                #     self.db.remove_contract_by_name('provided', removed_prov, contract['_id'])
+                #     attach_contract_response = self.attach_contract('provided', tenant, ap, removed_prov, contract['name'], delete=True)
+                #     if attach_contract_response == 'Successful':
+                #         self.logger.info('Successfully attached contract')
+                #     else:
+                #         self.logger.info('Contract deletion failed, Error: {}'.format(attach_contract_response))
+                #         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
+
+            elif status == 'delete':
+                contract = self.db.get_contract(props['_id'], identifier='id')
+                if not contract:
+                    self.logger.info('Contract does not exist')
+                else:
+                    # For attaching contracts to EPGs
+                    removed_con = contract['consumer_epg']
+                    removed_prov = contract['provider_epg']
+
+                    self.db.remove_contract_by_name('consumed', removed_con, props['_id'])
+                    self.logger.info("Removed consumed contract {} from DB".format(removed_con))
+                    self.db.remove_contract_by_name('provided', removed_prov, props['_id'])
+                    self.logger.info("Removed provided contract {} from DB".format(removed_prov))
+                    self.db.delete_contract(props['_id'])
+                    self.logger.info("Deleted contract {} from DB".format(props['_id']))
+
+                    attach_contract_response = self.attach_contract('consumed', tenant, ap, removed_con, contract['name'], delete=True)
+                    if attach_contract_response == 'Successful':
+                        self.logger.info('Successfully attached contract')
+                    else:
+                        self.logger.error('Contract deletion failed, Error: {}'.format(attach_contract_response))
+                        raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
+
+                    attach_contract_response = self.attach_contract('provided', tenant, ap, removed_prov, contract['name'], delete=True)
+                    if attach_contract_response == 'Successful':
+                        self.logger.info('Successfully attached contract')
+                    else:
+                        self.logger.error('Contract deletion failed, Error: {}'.format(attach_contract_response))
+                        raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
+
+                    props['name'] = contract['name']
+                    contract_response = self.create_contract(tenant, props['name'], filter=None, action=None, delete=True)
+                    if contract_response == 'Successful':
+                        self.logger.info('Successfully deleted contract')
+                    else:
+                        self.logger.error('Contract deletion failed, Error: {}'.format(contract_response))
+                        raise CheckpointException('Contract', 'APIC', props, contract_response)
+
             else:
-                # REVIEW current naming scheme below limited; filter names on apic limited to 64 characters
-                # TODO revise naming below depending on msg format for filter entries
-                filter_name = "-".join([tenant] + list(map(str, props['filter_entries'])))
-
-            filter = self.db.get_filter(filter_name)
-            if not filter: # create filter
-                self.create_filter(tenant, filter_name, props['filter_entries'])
-                self.db.insert_filter(filter_name, tenant, props['filter_entries'])
-
-            props['filter_name'] = filter_name
-
-            # REVIEW what is `action` options in msg
-            if props['action'] == 'ALLOW':
-                props['action'] = 'permit'
-
-            # REVIEW temporary solution as currently cons/prov are not lists but str for single EPG
-            # currently processing with lists, easier to expand later
-            #props['consumer_epg'] = [props['consumer_epg']]
-            #props['provider_epg'] = [props['provider_epg']]
-
-            consumer_epg_name = self.db.get_epg(props['consumer_epg'])
-            provider_epg_name = self.db.get_epg(props['provider_epg'])
-
-            props['consumer_epg'] = [consumer_epg_name['name']]
-            props['provider_epg'] = [provider_epg_name['name']]
-            ####
-
-            # create new contract with above filter
-            # REVIEW below snow is meant to work with multi-cons/prov contracts
-            # i.e. `type(kafka_msg['consumer_epg']) == list`
-
-            # `contract` represents old entry in DB
-            # `props` represents new to be updated entry
-            contract = self.db.get_contract(props['_id'], identifier='id')
-            if not contract:
-                contract_count = self.db.count_contracts()
-                contract_count = contract_count + 1
-                contract_name = "CONTRACT_" + str(contract_count)
-                props['name'] = contract_name
-
-                self.create_contract(tenant, props['name'], filter_name, props['action'])
-                self.db.insert_contract(props)
-                contract = props
-
-                # add consumer/provider fields
-                added_cons = contract['consumer_epg']
-                added_prov = contract['provider_epg']
-                removed_cons = []
-                removed_prov = []
-
-            else:
-                props['name'] = contract['name']
-                # update filter entry
-                if filter_name != contract['filter_name']:
-                    self.change_contract_filter(tenant, props['name'], filter_name, contract['filter_name'],
-                                                props['action'])
-                    self.db.update_contract_filter(props['_id'], filter_name, props['filter_entries'])
-
-                # update consumer/provider
-                self.db.update_contract_membership(props['_id'], 'consumed', props['consumer_epg'])
-                self.db.update_contract_membership(props['_id'], 'provided', props['provider_epg'])
-                self.logger.info("Determining contract cons/prov updates")
-                prev_cons = set(contract['consumer_epg'])
-                update_cons = set(props['consumer_epg'])
-                added_cons = list(update_cons - prev_cons)
-                removed_cons = list(prev_cons - update_cons)
-
-                prev_prov = set(contract['provider_epg'])
-                update_prov = set(props['provider_epg'])
-                added_prov = list(update_prov - prev_prov)
-                removed_prov = list(prev_prov - update_prov)
-
-            # attach contract consumer/producer on APIC
-            # associate contracts to EPG entries in database
-            # assumes epgs already created
-            if added_cons:
-                for epg_name in added_cons:
-                    #consumer = self.db.get_epg(epg_id)
-                    #self.attach_contract('consumed', tenant, ap, consumer['name'], contract['name'])
-                    self.attach_contract('consumed', tenant, ap, epg_name, contract['name'])
-                self.db.add_contract_by_name('consumed', added_cons, contract['_id'])
-
-            if removed_cons:
-                for epg_name in removed_cons:
-                    #consumer = self.db.get_epg(epg_id)
-                    #self.attach_contract('consumed', tenant, ap, consumer['name'], contract['name'], delete=True)
-                    self.attach_contract('consumed', tenant, ap, epg_name, contract['name'], delete=True)
-                self.db.remove_contract_by_name('consumed', removed_cons, contract['_id'])
-
-            if added_prov:
-                for epg_name in added_prov:
-                    #provider = self.db.get_epg(epg_id)
-                    #self.attach_contract('provided', tenant, ap, provider['name'], contract['name'])
-                    self.attach_contract('provided', tenant, ap, epg_name, contract['name'])
-                self.db.add_contract_by_name('provided', added_prov, contract['_id'])
-
-            if removed_prov:
-                for epg_name in removed_prov:
-                    #provider = self.db.get_epg(epg_id)
-                    #self.attach_contract('provided', tenant, ap, provider['name'], contract['name'], delete=True)
-                    self.attach_contract('provided', tenant, ap, epg_name, contract['name'], delete=True)
-                self.db.remove_contract_by_name('provided', removed_prov, contract['_id'])
-
-        elif status == 'delete':
-
-            contract = self.db.get_contract(props['_id'], identifier='id')
-            props['name'] = contract['name']
-            self.create_contract(tenant, props['name'], filter=None, action=None, delete=True)
-
-            self.db.remove_contract_by_name('consumed', contract['consumer_epg'], props['_id'])
-            self.db.remove_contract_by_name('provided', contract['provider_epg'], props['_id'])
-            self.db.delete_contract(props['_id'])
-        else:
-            pass # TODO possibly error handle if msg is bad?
+                self.logger.error("Could not process Contract because the status is: {}".format(status))
+                raise CheckpointException('Contract', 'APIC and DB', props, "Status of contract is {}, expected: create/update/delete")
+        except CheckpointException as e:
+            raise e
+        except Exception as e:
+            raise CheckpointException('Contract', 'APIC and DB', props, "Some error occured while processing contract message, Error: {}".format(str(e)))
 
 
     def attach_contract(self, role, tenant, ap, epg, contract, status='created,modified', delete=False):
@@ -391,8 +535,7 @@ class ConsumerThread(AuroraThread):
             `'created,modified'` or `'deleted'`
         :return:
         """
-        assert role == 'consumed' or role == 'provided'
-        assert status == 'created,modified' or 'deleted'
+
         if role == 'consumed':
             class_ = 'fvRsCons'
         elif role == 'provided':
@@ -416,45 +559,74 @@ class ConsumerThread(AuroraThread):
         res = self.apic.request("POST", url, data=json.dumps(payload))
         if res.status_code == 200:
             self.logger.info("Successfully processed contract '{}' for EPG '{}'".format(contract, epg))
+            return 'Successful'
+        else:
+            self.logger.error("API call for Contract '{}' to APIC failed, Error: {}, Status Code: {}".format(contract, res.content, res.status_code))
+            return "API call for Contract '{}' to APIC failed, Error: {}, Status Code: {}".format(contract, res.content, res.status_code)
 
 
-    def create_ep(self, tenant, ap, epg, endpoint):
+    def create_ep(self, tenant, ap, epg, endpoint, delete=False):
         """
-        Creating an static enpoint
+        Creating and Deleting an static enpoint
         """
+
         mac_address = endpoint['mac_address']
         ip_address = endpoint['ip_address']
         dn = 'uni/tn-{}/ap-{}/epg-{}/stcep-{}-type-silent-host'.format(tenant, ap, epg, mac_address)
         url = '/api/node/mo/{}.json'.format(dn)
-        payload = {
-            "fvStCEp": {
-                "attributes": {
-                    "dn": dn,
-                    "mac": mac_address,
-                    "ip": ip_address,
-                    "encap": "vlan-1"
-                },
-                "children": [
-                    {
-                        "fvRsStCEpToPathEp": {
-                            "attributes": {
-                                "tDn": "topology/pod-1/paths-101/pathep-[eth1/1]",
-                                "status": "created"
-                            },
-                            "children": []
+        if not delete:
+            payload = {
+                "fvStCEp": {
+                    "attributes": {
+                        "dn": dn,
+                        "mac": mac_address,
+                        "ip": ip_address,
+                        "encap": "vlan-1"
+                    },
+                    "children": [
+                        {
+                            "fvRsStCEpToPathEp": {
+                                "attributes": {
+                                    "tDn": "topology/pod-1/paths-101/pathep-[eth1/1]",
+                                    "status": "created"
+                                },
+                                "children": []
+                            }
                         }
-                    }
-                ]
+                    ]
+                }
             }
-        }
-        self.logger.info('Creating Endpoint whose mac address is {}'.format(mac_address))
-        res = self.apic.request("POST", url, data=json.dumps(payload))
+            self.logger.info('Creating Endpoint whose mac address is {}'.format(mac_address))
+            res = self.apic.request("POST", url, data=json.dumps(payload))
+        else:
+            payload = {
+                "fvStCEp": {
+                    "attributes": {
+                        "dn": dn
+                    },
+                    "children": [
+                        {
+                            "tagTag": {
+                                "attributes": {
+                                "key": "os",
+                                "status": "deleted"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+            self.logger.info('Deleting endpoint: {}'.format(dn))
+            res = self.apic.request("DELETE", url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.info('Successfully created endpoint whose mac address is {}'.format(mac_address))
+            self.logger.info('Successfully created/deleted endpoint whose mac address is {}'.format(mac_address))
+            return 'Successful'
         elif res.status_code == 400 and 'already exists' in res.text:
             self.logger.info('Endpoint whose mac address is {}, already exists'.format(mac_address))
+            return 'Successful'
         else:
             self.logger.error('Following error occured while creating mac address - {}'.format(mac_address))
+            return "API call for EP(mac:{}) creation/deletion failed, Error: {}, Status Code: {}".format(mac_address, res.content, res.status_code)
 
     
     def create_epg(self, tenant, ap, epg, status='created,modified', delete=False):
@@ -468,14 +640,12 @@ class ConsumerThread(AuroraThread):
             `'created,modified'` or `'deleted'`
         :return:
         """
-        assert status == 'created,modified' or 'deleted'
 
         status = 'deleted' if delete else 'created,modified'
         debug_action = 'Creating' if status == 'created,modified' else 'Deleting'
         self.logger.info("{} EPG '{}' on APIC".format(debug_action, epg))
 
         url = "/api/node/mo/uni/tn-{}/ap-{}/epg-{}.json".format(tenant, ap, epg)
-        # self.logger.debug("Creating EPG: {}".format(epg))
         payload = {
           "fvAEPg": {
             "attributes": {
@@ -486,7 +656,12 @@ class ConsumerThread(AuroraThread):
         }
         res = self.apic.request("POST", url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.info("Successfully processed EPG '{}'".format(epg))
+            self.logger.info("API call for EPG '{}' to APIC successful".format(epg))
+            return 'Successful'
+        else:
+            self.logger.error("API call for EPG '{}' to APIC failed, Error: {}, Status Code: {}".format(epg, res.content, res.status_code))
+            return "API call for EPG '{}' to APIC failed, Error: {}, Status Code: {}".format(epg, res.content, res.status_code)
+
 
     def create_contract(self, tenant, contract, filter, action, status='created,modified', delete=False):
         """Make a contract
@@ -541,7 +716,12 @@ class ConsumerThread(AuroraThread):
 
         res = self.apic.request('POST', url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.info("Successfully processed contract '{}'".format(contract))
+            self.logger.info("API call for Contract '{}' to APIC successful".format(contract))
+            return 'Successful'
+        else:
+            self.logger.error("API call for Contract '{}' to APIC failed, Error: {}, Status Code: {}".format(contract, res.content, res.status_code))
+            return "API call for Contract '{}' to APIC failed, Error: {}, Status Code: {}".format(contract, res.content, res.status_code)
+
 
     def change_contract_filter(self, tenant, contract, new_filter, old_filter, action):
         url = "/api/node/mo/uni/tn-{0}/brc-{1}/subj-contract-subject.json".format(tenant, contract)
@@ -580,7 +760,12 @@ class ConsumerThread(AuroraThread):
 
         res = self.apic.request('POST', url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.info("Successfully updated filter for contract '{}'".format(contract))
+            self.logger.info("Successfully updated filter for contract '{}' in APIC".format(contract))
+            return 'Successful'
+        else:
+            self.logger.error("API call for Filter updation for contract '{}' to APIC failed, Error: {}, Status Code: {}".format(contract, res.content, res.status_code))
+            return "API call for Contract '{}' to APIC failed, Error: {}, Status Code: {}".format(contract, res.content, res.status_code)
+
 
     def create_filter(self, tenant, filter, ports, status='created,modified', delete=False):
         """Make a filter
@@ -656,4 +841,8 @@ class ConsumerThread(AuroraThread):
         }
         res = self.apic.request('POST', url, data=json.dumps(payload))
         if res.status_code == 200:
-            self.logger.info("Successfully processed filter '{}'".format(filter))
+            self.logger.info("API call for Filter '{}' to APIC successful".format(filter))
+            return 'Successful'
+        else:
+            self.logger.error("API call for Filter '{}' to APIC failed, Error: {}, Status Code: {}".format(filter, res.content, res.status_code))
+            return "API call for Filter '{}' to APIC failed, Error: {}, Status Code: {}".format(filter, res.content, res.status_code)

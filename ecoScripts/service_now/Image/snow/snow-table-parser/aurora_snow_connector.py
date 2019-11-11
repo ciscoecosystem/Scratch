@@ -20,11 +20,11 @@ class snow_data:
         # kafka details
         self.kafka_hostname = os.environ.get(config_dict['kafka_hostname'])
         self.kafka_port = os.environ.get(config_dict['kafka_port']) 
-        self.initial_offset = config_dict['initial_offset']
+        self.initial_offset = self.get_time(os.environ.get(config_dict['initial_offset']))
         self.kafka_input_topic = os.environ.get(config_dict['kafka_input_topic'])
         self.kafka_output_topic = os.environ.get(config_dict['kafka_output_topic'])
         #self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
-        self.kafka_offset_topic=offset_topic = "offset-" + self.kafka_input_topic + "-" + self.kafka_output_topic
+        self.kafka_offset_topic = "offset-" + self.kafka_input_topic + "-" + self.kafka_output_topic
         self.restart_from_offset = config_dict['restart_from_offset']
 
         # SNOW configs
@@ -58,6 +58,14 @@ class snow_data:
             return yaml.safe_load(stream)
 
 
+    @handle_exception
+    def get_time(self, days):
+        """
+        returns current time - given paramater 'days'
+        """
+        return (datetime.now() - timedelta(days=int(days))).strftime('%Y-%m-%d %H:%M:%S')
+
+    
     @handle_exception
     def get_offset(self, client):
         """
@@ -212,7 +220,7 @@ class snow_data:
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time)
                 self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep', data_producer)
                 # TODO: validate need of time.sleep(1)
-                time.sleep(1)
+                # time.sleep(1)
 
                 # TODO: remove query below
                 if str(last_query_time) != str(self.initial_offset):
@@ -220,12 +228,12 @@ class snow_data:
                 else:
                     query = ''
                 self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False, 'reltype', data_producer)
-                time.sleep(1)
+                # time.sleep(1)
 
                 # TODO: remove type.sys_id filter from the below query and rel type should also be configurable by customer
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(last_query_time, current_query_time)
                 self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel', data_producer)
-                time.sleep(1)
+                # time.sleep(1)
 
                 if str(last_query_time) != str(self.initial_offset):
                     query = self.form_query('sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time))

@@ -3,9 +3,9 @@
     "name": "service_now",
     "label": "ServiceNow",
     "versions": [
-      "0.2"
+      "0.3"
     ],
-    "latest": "0.2",
+    "latest": "0.3",
     "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration/ecoScripts/service_now",
     "icon": "icon.png",
     "tags": "user",
@@ -17,9 +17,9 @@
     "name": "service_now_cmdb_tag",
     "label": "ServiceNow_CMDB_Tagging",
     "versions": [
-      "0.2"
+      "0.3"
     ],
-    "latest": "0.2",
+    "latest": "0.3",
     "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration/ecoScripts/service_now_cmdb_tag",
     "icon": "icon.png",
     "tags": "user",

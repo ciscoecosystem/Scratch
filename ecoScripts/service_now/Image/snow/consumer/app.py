@@ -11,7 +11,7 @@ from .. import consumer
 from ..logger import Logger
 
 exit = threading.Event() # condition in all looping threads, exit when set
-lock = threading.Lock() # global lock for the consumer; does not impact performance due to Cython GIL
+lock = threading.Lock() # global lock for the consumer; does not impact performance due to Python GIL
 # necessary for any shared resources between threads
 # currently used to prevent two threads from getting different APIC sessions
 # REVIEW do not believe it is necessary for get_logger()
