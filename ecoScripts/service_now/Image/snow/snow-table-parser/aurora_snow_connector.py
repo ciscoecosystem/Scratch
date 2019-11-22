@@ -2,6 +2,9 @@ import os
 import sys
 import time
 import json
+import io
+import avro.schema
+from avro.io import DatumWriter
 import yaml
 import requests
 from pykafka import KafkaClient
@@ -11,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from ..logger import Logger
 from .exception_handler import handle_exception
 
+
 class snow_data:
     @handle_exception
     def __init__(self):
@@ -19,11 +23,11 @@ class snow_data:
 
         # kafka details
         self.kafka_hostname = os.environ.get(config_dict['kafka_hostname'])
-        self.kafka_port = os.environ.get(config_dict['kafka_port']) 
+        self.kafka_port = os.environ.get(config_dict['kafka_port'])
         self.initial_offset = self.get_time(os.environ.get(config_dict['initial_offset']))
         self.kafka_input_topic = os.environ.get(config_dict['kafka_input_topic'])
         self.kafka_output_topic = os.environ.get(config_dict['kafka_output_topic'])
-        #self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
+        # self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
         self.kafka_offset_topic = "offset-" + self.kafka_input_topic + "-" + self.kafka_output_topic
         self.restart_from_offset = config_dict['restart_from_offset']
 
@@ -47,7 +51,6 @@ class snow_data:
         self.relationship_table = config_dict['relationship_table']
         self.relationship_type_table = config_dict['relationship_type_table']
 
-
     @handle_exception
     def load_config(self):
         """
@@ -57,7 +60,6 @@ class snow_data:
         with open(filename, 'r') as stream:
             return yaml.safe_load(stream)
 
-
     @handle_exception
     def get_time(self, days):
         """
@@ -65,7 +67,6 @@ class snow_data:
         """
         return (datetime.now() - timedelta(days=int(days))).strftime('%Y-%m-%d %H:%M:%S')
 
-    
     @handle_exception
     def get_offset(self, client):
         """
@@ -76,7 +77,8 @@ class snow_data:
         be read if there are two records in the kafka topic
         """
         offset_topic = client.topics[self.kafka_offset_topic]
-        offset_consumer = offset_topic.get_simple_consumer(auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=True)
+        offset_consumer = offset_topic.get_simple_consumer(auto_offset_reset=OffsetType.LATEST,
+                                                           reset_offset_on_start=True)
         for p, op in offset_consumer._partitions.items():
             # if there are less than 2 records in kafka topic, write the offset twice
             if op.next_offset < 2:
@@ -85,7 +87,6 @@ class snow_data:
             offsets = [(p, op.next_offset - 2)]
         offset_consumer.reset_offsets(offsets)
         return offset_consumer.consume().value.decode('utf-8')
-
 
     @handle_exception
     def write_offset(self, client, current_query_time):
@@ -97,7 +98,6 @@ class snow_data:
         current_query_time = str(current_query_time)
         offset_producer.produce(str.encode(current_query_time))
 
-
     @handle_exception
     def read_data(self, table, query):
         """
@@ -106,9 +106,9 @@ class snow_data:
         query_url = '{}/api/now/table/{}?{}'.format(self.snow_url, table, query)
         response = requests.get(query_url, auth=(self.snow_username, self.snow_password))
         response = response.json()
-        self.logger.info('Length of response of read data from table {}, length: {}'.format(table, len(response['result'])))
+        self.logger.info(
+            'Length of response of read data from table {}, length: {}'.format(table, len(response['result'])))
         return response
-
 
     @handle_exception
     def filter_table_data(self, response, query):
@@ -118,7 +118,7 @@ class snow_data:
         and store the result in filtered_response
         """
         filtered_response = dict()
-        filtered_response['result']= []
+        filtered_response['result'] = []
         tables = set([ci['sys_class_name'] for ci in response['result']])
         for table_name in tables:
             # TODO: Replace ```table_name == 'cmdb_ci_vmware_instance'``` with ```table_name in self.child_tables``` in below if condition
@@ -139,7 +139,6 @@ class snow_data:
         #         mark_table.append(table_name)
         return filtered_response
 
-
     @handle_exception
     def form_query(self, time_filter):
         """
@@ -152,7 +151,6 @@ class snow_data:
             query = '{}^ORtablename={}'.format(query, table)
         return query
 
-
     @handle_exception
     def create_ci_info(self, response, category):
         """
@@ -164,23 +162,31 @@ class snow_data:
         response['category'] = category
         return response
 
+    def convert_to_schema(data, schema_path):
+        schema = avro.schema.Parse(open(schema_path, 'r').read())
+        writer = avro.io.DatumWriter(schema)
+        bytes_writer = io.BytesIO()
+        encoder = avro.io.BinaryEncoder(bytes_writer)
+        writer.write(data, encoder)
+        value = bytes_writer.getvalue()
+        return value
 
     @handle_exception
     def write_data(self, producer, write_data):
         """
         writes the data to kafka topic
         """
-        value = json.dumps(write_data)
-        value = value.encode('utf-8')
-        producer.produce(value)
-
+        producer.produce(write_data)
 
     @handle_exception
     def query_tables(self, tablename, last_query_time, current_query_time, query, to_filter, category, data_producer):
         """
         queries the tables and writes the data in the kafka topic
         """
-        self.logger.info('Reading all the records from SNOW table {} updated between {} UTC and {} UTC'.format(tablename, last_query_time, current_query_time))
+        self.logger.info(
+            'Reading all the records from SNOW table {} updated between {} UTC and {} UTC'.format(tablename,
+                                                                                                  last_query_time,
+                                                                                                  current_query_time))
         if to_filter:
             response = self.read_data(tablename, '{}&sysparm_fields=sys_class_name'.format(query))
             self.logger.info('Filter the read table data')
@@ -188,22 +194,44 @@ class snow_data:
         else:
             response = self.read_data(tablename, query)
         if len(response['result']) > 0:
-            response = self.create_ci_info(response, category)
+            # response = self.create_ci_info(response, category)
             self.logger.info('Writing the data in the kafka topic')
-            self.write_data(data_producer, response)
 
+            if tablename == self.parent_table:
+                ep_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
+                                  'source_instance': self.source_instance}
+                ep_result['result'].append(self.convert_to_schema(response, "schema/EPSchema.avsc"))
+                self.convert_to_schema(ep_result, "schema/ParentSchema.avsc")
+                self.write_data(data_producer, ep_result)
+            elif tablename == self.relationship_type_table:
+                reltype_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
+                                  'source_instance': self.source_instance}
+                reltype_result['result'].append(self.convert_to_schema(response, "schema/RelTypeSchema.avsc"))
+                self.convert_to_schema(reltype_result,"schema/ParentSchema.avsc")
+                self.write_data(data_producer, reltype_result)
+            elif tablename == self.relationship_table:
+                rel_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
+                                  'source_instance': self.source_instance}
+                rel_result['result'].append(self.convert_to_schema(response, "schema/RelSchema.avsc"))
+                self.convert_to_schema(rel_result, "schema/ParentSchema.avsc")
+                self.write_data(data_producer, rel_result)
+            elif tablename == self.delete_table:
+                del_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
+                                  'source_instance': self.source_instance}
+                del_result['result'].append(self.convert_to_schema(response, "schema/DelSchema.avsc"))
+                self.convert_to_schema(del_result, "schema/ParentSchema.avsc")
+                self.write_data(data_producer, del_result)
 
     @handle_exception
     def start_timer(self):
         time.sleep(self.polling_interval)
-
 
     def main(self):
         try:
             # starting the kafka producer
             # TODO: initial offset should be current day - n days, n should be configurable
             self.logger.info('Starting the kafka producer')
-            client = KafkaClient(hosts = '{}:{}'.format(self.kafka_hostname, self.kafka_port))
+            client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port))
             data_topic = client.topics[self.kafka_input_topic]
             data_producer = data_topic.get_sync_producer()
 
@@ -217,27 +245,36 @@ class snow_data:
                 last_query_time = self.get_offset(client)
                 current_query_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
-                query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time)
-                self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep', data_producer)
+                query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time,
+                                                                                                        current_query_time)
+                self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep',
+                                  data_producer)
                 # TODO: validate need of time.sleep(1)
                 # time.sleep(1)
 
                 # TODO: remove query below
                 if str(last_query_time) != str(self.initial_offset):
-                    query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&sysparm_fields=sys_class_name'.format(last_query_time, current_query_time)
+                    query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&sysparm_fields=sys_class_name'.format(
+                        last_query_time, current_query_time)
                 else:
                     query = ''
-                self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False, 'reltype', data_producer)
+                self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False,
+                                  'reltype', data_producer)
                 # time.sleep(1)
 
                 # TODO: remove type.sys_id filter from the below query and rel type should also be configurable by customer
-                query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(last_query_time, current_query_time)
-                self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel', data_producer)
+                query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(
+                    last_query_time, current_query_time)
+                self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel',
+                                  data_producer)
                 # time.sleep(1)
 
                 if str(last_query_time) != str(self.initial_offset):
-                    query = self.form_query('sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time, current_query_time))
-                    self.query_tables(self.delete_table, last_query_time, current_query_time, query, False, 'delete', data_producer)
+                    query = self.form_query(
+                        'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time,
+                                                                                                        current_query_time))
+                    self.query_tables(self.delete_table, last_query_time, current_query_time, query, False, 'delete',
+                                      data_producer)
 
                     # while True:
                     #     variable = input('Make the changes on the SNOW. Press y\n')
@@ -247,7 +284,7 @@ class snow_data:
                     #     if variable != 'y':
                     #         continue
                     #     break
-            
+
                 self.write_offset(client, current_query_time)
 
                 self.logger.info('Starting the timer')
