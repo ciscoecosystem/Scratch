@@ -162,7 +162,7 @@ class snow_data:
         response['category'] = category
         return response
 
-    def convert_to_schema(data, schema_path):
+    def convert_to_schema(self, data, schema_path):
         schema = avro.schema.Parse(open(schema_path, 'r').read())
         writer = avro.io.DatumWriter(schema)
         bytes_writer = io.BytesIO()
