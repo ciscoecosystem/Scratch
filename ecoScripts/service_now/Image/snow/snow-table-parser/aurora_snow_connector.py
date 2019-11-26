@@ -51,6 +51,7 @@ class snow_data:
         self.relationship_table = config_dict['relationship_table']
         self.relationship_type_table = config_dict['relationship_type_table']
 
+
     @handle_exception
     def load_config(self):
         """
@@ -60,12 +61,14 @@ class snow_data:
         with open(filename, 'r') as stream:
             return yaml.safe_load(stream)
 
+
     @handle_exception
     def get_time(self, days):
         """
         returns current time - given paramater 'days'
         """
         return (datetime.now() - timedelta(days=int(days))).strftime('%Y-%m-%d %H:%M:%S')
+
 
     @handle_exception
     def get_offset(self, client):
@@ -88,6 +91,7 @@ class snow_data:
         offset_consumer.reset_offsets(offsets)
         return offset_consumer.consume().value.decode('utf-8')
 
+
     @handle_exception
     def write_offset(self, client, current_query_time):
         """
@@ -97,6 +101,7 @@ class snow_data:
         offset_producer = offset_topic.get_sync_producer()
         current_query_time = str(current_query_time)
         offset_producer.produce(str.encode(current_query_time))
+
 
     @handle_exception
     def read_data(self, table, query):
@@ -109,6 +114,7 @@ class snow_data:
         self.logger.info(
             'Length of response of read data from table {}, length: {}'.format(table, len(response['result'])))
         return response
+
 
     @handle_exception
     def filter_table_data(self, response, query):
@@ -139,6 +145,7 @@ class snow_data:
         #         mark_table.append(table_name)
         return filtered_response
 
+
     @handle_exception
     def form_query(self, time_filter):
         """
@@ -151,6 +158,7 @@ class snow_data:
             query = '{}^ORtablename={}'.format(query, table)
         return query
 
+
     @handle_exception
     def create_ci_info(self, response, category):
         """
@@ -162,7 +170,9 @@ class snow_data:
         response['category'] = category
         return response
 
+
     def convert_to_schema(self, data, schema_path):
+        schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), schema_path)
         schema = avro.schema.Parse(open(schema_path, 'r').read())
         writer = avro.io.DatumWriter(schema)
         bytes_writer = io.BytesIO()
@@ -171,12 +181,14 @@ class snow_data:
         value = bytes_writer.getvalue()
         return value
 
+
     @handle_exception
     def write_data(self, producer, write_data):
         """
         writes the data to kafka topic
         """
         producer.produce(write_data)
+
 
     @handle_exception
     def query_tables(self, tablename, last_query_time, current_query_time, query, to_filter, category, data_producer):
@@ -193,6 +205,7 @@ class snow_data:
             response = self.filter_table_data(response, query)
         else:
             response = self.read_data(tablename, query)
+
         if len(response['result']) > 0:
             # response = self.create_ci_info(response, category)
             self.logger.info('Writing the data in the kafka topic')
@@ -200,31 +213,40 @@ class snow_data:
             if tablename == self.parent_table:
                 ep_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
                                   'source_instance': self.source_instance}
-                ep_result['result'].append(self.convert_to_schema(response, "schema/EPSchema.avsc"))
-                self.convert_to_schema(ep_result, "schema/ParentSchema.avsc")
+                for resp in response['result']:
+                    ep_result['result'].append(self.convert_to_schema( resp, "schema/EPSchema.avsc"))
+                ep_result = self.convert_to_schema(ep_result, "schema/ParentSchema.avsc")
                 self.write_data(data_producer, ep_result)
+
             elif tablename == self.relationship_type_table:
                 reltype_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
                                   'source_instance': self.source_instance}
-                reltype_result['result'].append(self.convert_to_schema(response, "schema/RelTypeSchema.avsc"))
-                self.convert_to_schema(reltype_result,"schema/ParentSchema.avsc")
+                for resp in response['result']:
+                    reltype_result['result'].append(self.convert_to_schema(resp, "schema/ReltypeSchema.avsc"))
+                reltype_result = self.convert_to_schema(reltype_result,"schema/ParentSchema.avsc")
                 self.write_data(data_producer, reltype_result)
+
             elif tablename == self.relationship_table:
                 rel_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
                                   'source_instance': self.source_instance}
-                rel_result['result'].append(self.convert_to_schema(response, "schema/RelSchema.avsc"))
-                self.convert_to_schema(rel_result, "schema/ParentSchema.avsc")
+                for resp in response['result']:
+                    rel_result['result'].append(self.convert_to_schema(resp, "schema/RelSchema.avsc"))
+                rel_result = self.convert_to_schema(rel_result, "schema/ParentSchema.avsc")
                 self.write_data(data_producer, rel_result)
+
             elif tablename == self.delete_table:
                 del_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
                                   'source_instance': self.source_instance}
-                del_result['result'].append(self.convert_to_schema(response, "schema/DelSchema.avsc"))
-                self.convert_to_schema(del_result, "schema/ParentSchema.avsc")
+                for resp in response['result']:
+                    del_result['result'].append(self.convert_to_schema(resp, "schema/DelSchema.avsc"))
+                del_result = self.convert_to_schema(del_result, "schema/ParentSchema.avsc")
                 self.write_data(data_producer, del_result)
+
 
     @handle_exception
     def start_timer(self):
         time.sleep(self.polling_interval)
+
 
     def main(self):
         try:
@@ -233,7 +255,7 @@ class snow_data:
             self.logger.info('Starting the kafka producer')
             client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port))
             data_topic = client.topics[self.kafka_input_topic]
-            data_producer = data_topic.get_sync_producer()
+            data_producer = data_topic.get_sync_producer(max_request_size=50000000)
 
             if self.restart_from_offset:
                 # writing offset twice intially as there's a bug in current kafka library - latest record can only be read if there are two records in the kafka topic
