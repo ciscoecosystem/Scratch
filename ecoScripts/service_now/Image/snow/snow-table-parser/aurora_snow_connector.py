@@ -260,7 +260,11 @@ class snow_data:
                     query = ''
                 self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False,
                                   'reltype', data_producer)
-                # time.sleep(1)
+
+                # This is to slow down the producer
+                # because beam is not able to get rel_type while processing rel
+                # slowing down the producers solves the probleam
+                time.sleep(3)
 
                 # TODO: remove type.sys_id filter from the below query and rel type should also be configurable by customer
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(
