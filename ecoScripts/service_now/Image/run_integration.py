@@ -31,6 +31,10 @@ def main():
             process_running = True
             break
 
+    # Avro installation
+    subprocess.Popen(["sh", "install_avro.sh"]).wait()
+
+    # TODO: get consumer and connector out of if else
     if not process_running:
         pigeon.sendInfoMessage("Start pipeline process!!")
         pipeline = subprocess.Popen(["java", "-jar", "/app/data-pipeline-bundled-0.1.jar", "--runner=FlinkRunner",
