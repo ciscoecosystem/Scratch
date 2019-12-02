@@ -1,0 +1,45 @@
+# SNOW config
+snow_url: SNOW_URL
+snow_username: SNOW_USERNAME
+snow_password: SNOW_PASSWORD
+
+# SNOW table configs
+parent_table: cmdb_ci
+child_tables:
+  - cmdb_ci_resource_pool
+  - cmdb_ci_esx_server
+  - cmdb_ci_vcenter_dvs
+  - cmdb_ci_vmware_instance
+  - cmdb_ci_vmware_template
+  - cmdb_ci_vcenter_cluster
+  - cmdb_ci_vcenter_datacenter
+  - cmdb_ci_vcenter_datastore
+  - cmdb_ci_vcenter_folder
+  - cmdb_ci_vcenter
+  - cmdb_ci_vcenter_network
+  - cmdb_ci_ip_network
+delete_table: sys_audit_delete
+relationship_table: cmdb_rel_ci
+relationship_type_table: cmdb_rel_type
+
+# rel_types:
+#   - Depends on::Used by
+#  - Used by::Uses
+#  - Runs on::Runs
+# os_table: cmdb_ci_spkg
+# subnet_table: cmdb_ci_ip_network
+
+# polling interval in seconds
+polling_interval: 120
+
+initial_offset: FETCH_DURATION
+
+# if set True, when you restart the python script it will read data from the initial_offset to current time
+restart_from_offset: False
+
+
+log_level: INFO
+backup_count: 100
+
+discovery_source: ServiceNow
+source_instance: ven01512

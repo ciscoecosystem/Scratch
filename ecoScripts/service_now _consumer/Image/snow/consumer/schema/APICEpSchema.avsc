@@ -1,0 +1,14 @@
+{
+    "namespace": "org.cisco.aurora.avro",
+    "type": "record",
+    "name": "APICEpInfo",
+    "fields": [
+        {"name":"uuid", "type":"string"},
+        {"name":"name", "type":"string"},
+        {"name":"sys_id","type":"string"},
+        {"name":"ip_address","type":"string"},
+        {"name":"mac_address","type":"string"},
+        {"name":"epg","type":"string"},
+        {"name":"status","type":"string"}
+    ]
+}

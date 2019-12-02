@@ -1,0 +1,5 @@
+pyyaml
+requests
+bs4
+pykafka
+kafka-python
