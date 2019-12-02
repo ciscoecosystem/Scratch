@@ -1,0 +1,13 @@
+{
+    "namespace": "org.cisco.aurora.avro",
+    "type": "record",
+    "name": "APICEpgInfo",
+    "fields": [
+        {"name":"uuid", "type":"string"},
+        {"name":"name", "type":"string"},
+        {"name":"members","type":{"type":"array","item":"string"}},
+        {"name":"downstream_reltype","type":{"type":"array","item":"string"}},
+        {"name":"upstream_reltype","type":{"type":"array","item":"string"}},
+        {"name":"status","type":"string"}
+    ]
+}

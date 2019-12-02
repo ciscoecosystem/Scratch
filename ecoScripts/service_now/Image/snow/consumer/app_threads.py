@@ -28,6 +28,7 @@ from pymongo import MongoClient
 from .apic import APIC
 from ..logger import Logger
 from .database import Database
+from kafka_utility import kafka_utils
 
 
 class AuroraThread(threading.Thread):
@@ -85,7 +86,8 @@ class ConsumerThread(AuroraThread):
     Set up APIC, Kafka consumer, and database and wait for messages on Kafka
     Take each message and process them based on message type
     """
-
+    self.PARENT_SCHEMA = '.\schema\ParentSchema.avsc'
+    self.CHILD_SCHEMA = {'ep':'.\schema\APICEpSchema.avsc','epg':'.\schema\APICEpgSchema.avsc','contract':'.\schema\APICContractSchema.avsc'}
     def __init__(self, exit, lock):
         super(ConsumerThread, self).__init__(exit, lock)
 
@@ -96,9 +98,6 @@ class ConsumerThread(AuroraThread):
         self.config['application_profile'] = os.getenv('AP_NAME')
         self.config['mongo_host'] = os.getenv('MONGO_HOST')
         self.config['mongo_port'] = int(os.getenv('MONGO_PORT'))
-        self.config['kafka_topic'] = os.getenv('KAFKA_OUTPUT_TOPIC')
-        self.config['kafka_ip'] = os.getenv('KAFKA_HOSTNAME')
-        self.config['kafka_error_topic'] = 'error_' + self.config['kafka_topic']
 
     def run(self):
         self.logger.info("Reading configuration from file")
@@ -106,11 +105,12 @@ class ConsumerThread(AuroraThread):
 
         try:
             self.logger.info("Connecting to Kafka server")
-            self.consumer = KafkaConsumer(self.config['kafka_topic'], bootstrap_servers=self.config['kafka_ip'], auto_offset_reset='earliest', group_id='test')
+            self.kafka_utils = kafka_utils()
+            self.kafka_utils.create_consumer()
             self.logger.info("Successfully connected to Kafka")
 
             self.logger.info("Creating Kafka Producer")
-            self.producer = KafkaProducer(bootstrap_servers=self.config['kafka_ip'], value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+            self.kafka_utils.create_producer()
             self.logger.info("Successfully created Kafka Producer")
 
             self.logger.info("Connecting to MongoDB")
@@ -127,9 +127,10 @@ class ConsumerThread(AuroraThread):
 
         self.logger.info("Waiting for messages from Kafka")
         while not self.exit.is_set():
-            msg_pack = self.consumer.poll()
+            msg_pack = self.kafka_utils.get_consumer().poll()
             # This is for commit sync in Kafka.
-            self.consumer.commit()
+            self.kafka_utils.get_consumer().commit()
+            
             for tp, messages in msg_pack.items():
                 for msg in messages:
                     self.logger.info("Received message from Kafka")
@@ -137,37 +138,40 @@ class ConsumerThread(AuroraThread):
                     if self.exit.is_set():
                         break
         self.logger.info("Closing Kafka consumer")
-        self.consumer.close()
+        self.kafka_utils.get_consumer().close()
         self.logger.info("Consumer thread exited succesfully")
-
+        
     def process_message(self, msg):
         """Take msg as string and get dictionary
         Do basic key/value processing and call appropriate function for message type
         """
         try:
             try:
-                props = json.loads(msg.value)
+                props = self.kafka_utils.unparse_avro_from_kafka(msg, self.PARENT_SCHEMA,True)
+                category = props['category']
+                del props['category']
+                props = self.kafka_utils.unparse_avro_from_kafka(props, self.CHILD_SCHEMA.get(category),False)                                 
                 props['_id'] = props['uuid']
                 status = props['status']
-                msg_type = props['msg_type']
-                del props['uuid'], props['status'], props['msg_type']
+                del props['uuid'], props['status']
             except Exception as e:
+                self.kafka_utils.produce_error(e.data)
                 raise CheckpointException('Parsing', 'APIC and DB', msg, "Some error occured while processing endpoint message, Error: {}".format(str(e)))
-
-            if msg_type == 'ep':
+            
+            if category == 'ep':
                 self.logger.info("Received endpoint message")
                 self.process_endpoint_message(props, status)
-            elif msg_type == 'epg':
+            elif category == 'epg':
                 self.logger.info("Received grouping message")
                 self.process_grouping_message(props, status)
-            elif msg_type == 'contract':
+            elif category == 'contract':
                 self.logger.info("Received contract message")
                 self.process_contract_message(props, status)
             else:
                 self.logger.error("Received invalid message type")
         except CheckpointException as e:
             self.logger.error("Dumping message to error topic {}".format(str(e.data)))
-            self.producer.send(self.config['kafka_error_topic'], value=e.data)
+            self.kafka_utils.produce_error(e.data)
 
 
     def process_endpoint_message(self, props, status):
@@ -344,6 +348,8 @@ class ConsumerThread(AuroraThread):
                     props['action'] = 'permit'
 
                 # Getting EPG name stored in DB using the uuid and put it into props
+                #to do
+                #we can remove these 2 lines
                 consumer_epg_name = self.db.get_epg(props['consumer_epg'])
                 provider_epg_name = self.db.get_epg(props['provider_epg'])
                 props['consumer_epg'] = consumer_epg_name['name']
