@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 from ..logger import Logger
 from .exception_handler import handle_exception
+from kafka_utility import kafka_utils
 
 
 class snow_data:
@@ -22,13 +23,7 @@ class snow_data:
         self.logger = Logger.get_logger()
 
         # kafka details
-        self.kafka_hostname = os.environ.get(config_dict['kafka_hostname'])
-        self.kafka_port = os.environ.get(config_dict['kafka_port'])
-        self.initial_offset = self.get_time(os.environ.get(config_dict['initial_offset']))
-        self.kafka_input_topic = os.environ.get(config_dict['kafka_input_topic'])
-        self.kafka_output_topic = os.environ.get(config_dict['kafka_output_topic'])
-        # self.kafka_offset_topic = os.environ.get(config_dict['kafka_offset_topic'])
-        self.kafka_offset_topic = "offset-" + self.kafka_input_topic + "-" + self.kafka_output_topic
+        self.initial_offset = self.get_time(os.environ.get(config_dict['initial_offset']))      
         self.restart_from_offset = config_dict['restart_from_offset']
 
         # SNOW configs
@@ -41,8 +36,6 @@ class snow_data:
         # polling interval
         self.polling_interval = config_dict['polling_interval']
 
-        # max_request_size
-        self.max_request_size = config_dict['max_request_size']
 
         # SNOW tables
         self.parent_table = config_dict['parent_table']
@@ -71,7 +64,7 @@ class snow_data:
 
 
     @handle_exception
-    def get_offset(self, client):
+    def get_offset(self):
         """
         gets the last_query_time from the kafka topic
 
@@ -79,28 +72,28 @@ class snow_data:
         in current kafka library - latest record can only
         be read if there are two records in the kafka topic
         """
-        offset_topic = client.topics[self.kafka_offset_topic]
+        offset_topic = self.kafka_utils.get_offset_topic()
         offset_consumer = offset_topic.get_simple_consumer(auto_offset_reset=OffsetType.LATEST,
                                                            reset_offset_on_start=True)
         for p, op in offset_consumer._partitions.items():
             # if there are less than 2 records in kafka topic, write the offset twice
             if op.next_offset < 2:
-                self.write_offset(client, self.initial_offset)
-                self.write_offset(client, self.initial_offset)
+                self.write_offset(self.initial_offset)
+                self.write_offset(self.initial_offset)
             offsets = [(p, op.next_offset - 2)]
         offset_consumer.reset_offsets(offsets)
         return offset_consumer.consume().value.decode('utf-8')
 
 
     @handle_exception
-    def write_offset(self, client, current_query_time):
+    def write_offset(self, current_query_time):
         """
         writes the current_query_time to the kafka topic
         """
-        offset_topic = client.topics[self.kafka_offset_topic]
+        offset_topic = self.kafka_utils.get_offset_topic()
         offset_producer = offset_topic.get_sync_producer()
         current_query_time = str(current_query_time)
-        offset_producer.produce(str.encode(current_query_time))
+        self.kafka_utils.write_data(offset_producer, str.encode(current_query_time))
 
 
     @handle_exception
@@ -171,23 +164,15 @@ class snow_data:
         return response
 
 
-    def convert_to_schema(self, data, schema_path):
-        schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), schema_path)
-        schema = avro.schema.Parse(open(schema_path, 'r').read())
-        writer = avro.io.DatumWriter(schema)
-        bytes_writer = io.BytesIO()
-        encoder = avro.io.BinaryEncoder(bytes_writer)
-        writer.write(data, encoder)
-        value = bytes_writer.getvalue()
-        return value
-
 
     @handle_exception
-    def write_data(self, producer, write_data):
-        """
-        writes the data to kafka topic
-        """
-        producer.produce(write_data)
+    def parse_and_write_to_kafka(data_producer, response, schema_path):
+        result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
+                                  'source_instance': self.source_instance}
+        for resp in response['result']:
+            result['result'].append(self.kafka_utils.convert_to_schema( resp, schema_path))
+        result = self.kafka_utils.convert_to_schema(result, "schema/ParentSchema.avsc")
+        self.kafka_utils.write_data(data_producer, result)
 
 
     @handle_exception
@@ -211,36 +196,16 @@ class snow_data:
             self.logger.info('Writing the data in the kafka topic')
 
             if tablename == self.parent_table:
-                ep_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
-                                  'source_instance': self.source_instance}
-                for resp in response['result']:
-                    ep_result['result'].append(self.convert_to_schema( resp, "schema/EPSchema.avsc"))
-                ep_result = self.convert_to_schema(ep_result, "schema/ParentSchema.avsc")
-                self.write_data(data_producer, ep_result)
+                self.parse_and_write_to_kafka(data_producer, response, "schema/EPSchema.avsc")
 
             elif tablename == self.relationship_type_table:
-                reltype_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
-                                  'source_instance': self.source_instance}
-                for resp in response['result']:
-                    reltype_result['result'].append(self.convert_to_schema(resp, "schema/ReltypeSchema.avsc"))
-                reltype_result = self.convert_to_schema(reltype_result,"schema/ParentSchema.avsc")
-                self.write_data(data_producer, reltype_result)
+                self.parse_and_write_to_kafka(data_producer, response, "schema/ReltypeSchema.avsc")
 
             elif tablename == self.relationship_table:
-                rel_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
-                                  'source_instance': self.source_instance}
-                for resp in response['result']:
-                    rel_result['result'].append(self.convert_to_schema(resp, "schema/RelSchema.avsc"))
-                rel_result = self.convert_to_schema(rel_result, "schema/ParentSchema.avsc")
-                self.write_data(data_producer, rel_result)
-
+                self.parse_and_write_to_kafka(data_producer, response, "schema/RelSchema.avsc")
+    
             elif tablename == self.delete_table:
-                del_result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
-                                  'source_instance': self.source_instance}
-                for resp in response['result']:
-                    del_result['result'].append(self.convert_to_schema(resp, "schema/DelSchema.avsc"))
-                del_result = self.convert_to_schema(del_result, "schema/ParentSchema.avsc")
-                self.write_data(data_producer, del_result)
+                self.parse_and_write_to_kafka(data_producer, response, "schema/DelSchema.avsc")
 
 
     @handle_exception
@@ -253,18 +218,19 @@ class snow_data:
             # starting the kafka producer
             # TODO: initial offset should be current day - n days, n should be configurable
             self.logger.info('Starting the kafka producer')
-            client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port))
-            data_topic = client.topics[self.kafka_input_topic]
+            self.kafka_utils = kafka_utils()
+            self.kafka_utils.create_kafka_client()
+            data_topic = self.kafka_utils.get_topics()
             data_producer = data_topic.get_sync_producer(max_request_size=50000000)
 
             if self.restart_from_offset:
                 # writing offset twice intially as there's a bug in current kafka library - latest record can only be read if there are two records in the kafka topic
-                self.write_offset(client, self.initial_offset)
-                self.write_offset(client, self.initial_offset)
+                self.write_offset(self.initial_offset)
+                self.write_offset(self.initial_offset)
 
             while True:
                 # get the last query time and write current query time in the kafka topic
-                last_query_time = self.get_offset(client)
+                last_query_time = self.get_offset()
                 current_query_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time,
@@ -311,7 +277,7 @@ class snow_data:
                     #         continue
                     #     break
 
-                self.write_offset(client, current_query_time)
+                self.write_offset(current_query_time)
 
                 self.logger.info('Starting the timer')
                 self.start_timer()

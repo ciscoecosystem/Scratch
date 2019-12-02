@@ -21,6 +21,7 @@ child_tables:
 delete_table: sys_audit_delete
 relationship_table: cmdb_rel_ci
 relationship_type_table: cmdb_rel_type
+
 # rel_types:
 #   - Depends on::Used by
 #  - Used by::Uses
@@ -31,19 +32,11 @@ relationship_type_table: cmdb_rel_type
 # polling interval in seconds
 polling_interval: 120
 
-# Kafka details
-kafka_hostname: KAFKA_HOSTNAME
-kafka_port: KAFKA_PORT
-kafka_input_topic: KAFKA_INPUT_TOPIC
-kafka_output_topic: KAFKA_OUTPUT_TOPIC
-kafka_offset_topic: KAFKA_OFFSET_TOPIC
 initial_offset: FETCH_DURATION
 
 # if set True, when you restart the python script it will read data from the initial_offset to current time
 restart_from_offset: False
 
-# max size of data to be dumped in Kafka Topic
-max_request_size: 50000000
 
 log_level: INFO
 backup_count: 100
