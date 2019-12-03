@@ -106,12 +106,10 @@ class ConsumerThread(AuroraThread):
         try:
             self.logger.info("Connecting to Kafka server")
             self.kafka_utils = kafka_utils()
-            self.kafka_utils.create_consumer()
+            self.kafka_utils.create_kafka_client()
+            topic = self.kafka_utils.get_consumer_input_topic()
+            self.kafka_utils.create_consumer_topic(topic,auto_offset_reset=-2,reset_offset_on_start=True,consumer_group= 'test')
             self.logger.info("Successfully connected to Kafka")
-
-            self.logger.info("Creating Kafka Producer")
-            self.kafka_utils.create_producer()
-            self.logger.info("Successfully created Kafka Producer")
 
             self.logger.info("Connecting to MongoDB")
             self.db = Database(host=self.config['mongo_host'], port=self.config['mongo_port'])
@@ -155,7 +153,6 @@ class ConsumerThread(AuroraThread):
                 status = props['status']
                 del props['uuid'], props['status']
             except Exception as e:
-                self.kafka_utils.produce_error(e.data)
                 raise CheckpointException('Parsing', 'APIC and DB', msg, "Some error occured while processing endpoint message, Error: {}".format(str(e)))
             
             if category == 'ep':
@@ -171,7 +168,9 @@ class ConsumerThread(AuroraThread):
                 self.logger.error("Received invalid message type")
         except CheckpointException as e:
             self.logger.error("Dumping message to error topic {}".format(str(e.data)))
-            self.kafka_utils.produce_error(e.data)
+            error_topic = kafka_utils.get_consumer_error_topic()
+            self.kafka_utils.create_producer_topic(error_topic)
+            self.kafka_utils.write_data(e.data)
 
 
     def process_endpoint_message(self, props, status):

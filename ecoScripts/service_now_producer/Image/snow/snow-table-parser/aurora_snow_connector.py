@@ -72,9 +72,9 @@ class snow_data:
         in current kafka library - latest record can only
         be read if there are two records in the kafka topic
         """
-        offset_topic = self.kafka_utils.get_offset_topic()
-        offset_consumer = offset_topic.get_simple_consumer(auto_offset_reset=OffsetType.LATEST,
-                                                           reset_offset_on_start=True)
+        offset_topic = self.kafka_utils.get_snow_offset_topic()
+        self.kafka_utils.create_consumer_topic(topic,auto_offset_reset=-1,reset_offset_on_start=True,consumer_group=None)
+        offset_consumer = self.kafka_utils.get_consumer()
         for p, op in offset_consumer._partitions.items():
             # if there are less than 2 records in kafka topic, write the offset twice
             if op.next_offset < 2:
@@ -90,10 +90,10 @@ class snow_data:
         """
         writes the current_query_time to the kafka topic
         """
-        offset_topic = self.kafka_utils.get_offset_topic()
+        offset_topic = self.kafka_utils.get_snow_offset_topic()
         offset_producer = offset_topic.get_sync_producer()
         current_query_time = str(current_query_time)
-        self.kafka_utils.write_data(offset_producer, str.encode(current_query_time))
+        offset_producer.produce(current_query_time)
 
 
     @handle_exception
@@ -166,17 +166,17 @@ class snow_data:
 
 
     @handle_exception
-    def parse_and_write_to_kafka(data_producer, response, schema_path):
+    def parse_and_write_to_kafka(response, schema_path):
         result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
                                   'source_instance': self.source_instance}
         for resp in response['result']:
             result['result'].append(self.kafka_utils.convert_to_schema( resp, schema_path))
         result = self.kafka_utils.convert_to_schema(result, "schema/ParentSchema.avsc")
-        self.kafka_utils.write_data(data_producer, result)
+        self.kafka_utils.write_data(result)
 
 
     @handle_exception
-    def query_tables(self, tablename, last_query_time, current_query_time, query, to_filter, category, data_producer):
+    def query_tables(self, tablename, last_query_time, current_query_time, query, to_filter, category):
         """
         queries the tables and writes the data in the kafka topic
         """
@@ -196,16 +196,16 @@ class snow_data:
             self.logger.info('Writing the data in the kafka topic')
 
             if tablename == self.parent_table:
-                self.parse_and_write_to_kafka(data_producer, response, "schema/EPSchema.avsc")
+                self.parse_and_write_to_kafka(response, "schema/EPSchema.avsc")
 
             elif tablename == self.relationship_type_table:
-                self.parse_and_write_to_kafka(data_producer, response, "schema/ReltypeSchema.avsc")
+                self.parse_and_write_to_kafka(response, "schema/ReltypeSchema.avsc")
 
             elif tablename == self.relationship_table:
-                self.parse_and_write_to_kafka(data_producer, response, "schema/RelSchema.avsc")
+                self.parse_and_write_to_kafka(response, "schema/RelSchema.avsc")
     
             elif tablename == self.delete_table:
-                self.parse_and_write_to_kafka(data_producer, response, "schema/DelSchema.avsc")
+                self.parse_and_write_to_kafka(response, "schema/DelSchema.avsc")
 
 
     @handle_exception
@@ -220,8 +220,7 @@ class snow_data:
             self.logger.info('Starting the kafka producer')
             self.kafka_utils = kafka_utils()
             self.kafka_utils.create_kafka_client()
-            data_topic = self.kafka_utils.get_topics()
-            data_producer = data_topic.get_sync_producer(max_request_size=50000000)
+            self.kafka_utils.create_producer_topic(self.kafka_utils.get_producer_output_topic(),max_request_size=50000000) 
 
             if self.restart_from_offset:
                 # writing offset twice intially as there's a bug in current kafka library - latest record can only be read if there are two records in the kafka topic
@@ -235,8 +234,7 @@ class snow_data:
 
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time,
                                                                                                         current_query_time)
-                self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep',
-                                  data_producer)
+                self.query_tables(self.parent_table, last_query_time, current_query_time, query, True, 'ep')
                 # TODO: validate need of time.sleep(1)
                 # time.sleep(1)
 
@@ -247,7 +245,7 @@ class snow_data:
                 else:
                     query = ''
                 self.query_tables(self.relationship_type_table, last_query_time, current_query_time, query, False,
-                                  'reltype', data_producer)
+                                  'reltype')
 
                 # This is to slow down the producer
                 # because beam is not able to get rel_type while processing rel
@@ -257,16 +255,14 @@ class snow_data:
                 # TODO: remove type.sys_id filter from the below query and rel type should also be configurable by customer
                 query = 'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\'&type.sys_id=1a9cb166f1571100a92eb60da2bce5c5'.format(
                     last_query_time, current_query_time)
-                self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel',
-                                  data_producer)
+                self.query_tables(self.relationship_table, last_query_time, current_query_time, query, False, 'rel')
                 # time.sleep(1)
 
                 if str(last_query_time) != str(self.initial_offset):
                     query = self.form_query(
                         'sysparm_query=sys_updated_onBETWEENjavascript:\'{}\'@javascript:\'{}\''.format(last_query_time,
                                                                                                         current_query_time))
-                    self.query_tables(self.delete_table, last_query_time, current_query_time, query, False, 'delete',
-                                      data_producer)
+                    self.query_tables(self.delete_table, last_query_time, current_query_time, query, False, 'delete')
 
                     # while True:
                     #     variable = input('Make the changes on the SNOW. Press y\n')

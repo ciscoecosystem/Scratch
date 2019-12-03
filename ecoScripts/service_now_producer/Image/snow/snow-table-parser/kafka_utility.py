@@ -1,29 +1,24 @@
+import os
+import json
+import io
+import avro.schema
 from pykafka import KafkaClient
-from pykafka.common import OffsetType
-from datetime import datetime, timedelta, timezone
 
 
-def load_config(filename):
-    """
-    loads the configuration from the yaml file
-    """
-    filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
-    with open(filename, 'r') as stream:
-        return yaml.safe_load(stream)
 
 
 class kafka_utils:
     def __init__(self):
-        kafka_config_dict = load_config('kafka_config.yaml')
-        
-
         # kafka details
-        self.kafka_hostname = os.environ.get(kafka_config_dict['kafka_hostname'])
-        self.kafka_port = os.environ.get(kafka_config_dict['kafka_port'])
-        self.kafka_input_topic = os.environ.get(kafka_config_dict['kafka_input_topic'])
-        self.kafka_output_topic = os.environ.get(kafka_config_dict['kafka_output_topic'])
-        
-        self.kafka_offset_topic = "offset-" + self.kafka_input_topic + "-" + self.kafka_output_topic
+        self.kafka_hostname = os.getenv('KAFKA_HOSTNAME')
+        self.kafka_port = os.environ.get('KAFKA_PORT')
+        #os.environ.get('KAFKA_INPUT_TOPIC') is output topic for producer and input topic for beam module.
+        self.kafka_output_topic = os.environ.get('KAFKA_INPUT_TOPIC')
+        #os.environ.get('KAFKA_INPUT_TOPIC') is input topic for consumer and output topic for beam module.
+        self.kafka_input_topic = os.environ.get('KAFKA_OUTPUT_TOPIC')
+        self.kafka_error_topic = 'error_' + self.kafka_input_topic
+        #using this topic to fetch data from input system(e.g SNOW) from 'n'-duration in days which configurable on runner config page.         
+        self.kafka_offset_topic = "offset-" + self.kafka_output_topic + "-" + self.kafka_input_topic
 
     def create_kafka_client(self):
         self.client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port))
@@ -39,23 +34,42 @@ class kafka_utils:
         value = bytes_writer.getvalue()
         return value
 
-    def get_topics(self):
-        data_topic = self.client.topics[self.kafka_input_topic]
-        return data_topic
+    def get_producer_output_topic(self):
+        return self.client.topics[self.kafka_output_topic]
+        
+    def get_snow_offset_topic(self):
+        return self.client.topics[self.kafka_offset_topic]
     
-    def get_offset_topic(self):
+    def get_consumer_error_topic():
+        return self.client.topics[self.kafka_error_topic]
 
-        offset_topic = self.client.topics[self.kafka_offset_topic]
-        return offset_topic
-
-    def write_data(self, producer, write_data):
+    def write_data(self,write_data):
         """
         writes the data to kafka topic
         """
-        producer.produce(write_data)
+        self.producer.produce(write_data)
 
+    def get_consumer_input_topic(self):
+        return self.client.topics[self.kafka_input_topic]
 
+    def create_consumer_topic(topic,auto_offset_reset=-2,reset_offset_on_start=False,consumer_group=None):
+        #auto_offset_reset -2 for earliest and -1 for latest. default is -2
+        self.consumer = topic.get_simple_consumer(auto_offset_reset=auto_offset_reset, reset_offset_on_start=reset_offset_on_start,consumer_group=consumer_group )
 
+    def create_producer_topic(topic, max_request_size=1000012):
+        #default max_request_size for kafka is 1000012
+        self.producer = topic.get_sync_producer(max_request_size = max_request_size)
 
-
-
+    def get_consumer(self):
+        return self.consumer
+    def unparse_avro_from_kafka(self, msg, schema_path, from_kafka):
+        schema = avro.schema.Parse(open(schema_path, 'r').read())
+        if from_kafka:
+            msg = msg.value
+        bytes_reader = io.BytesIO(msg)
+        decoder = avro.io.BinaryDecoder(bytes_reader)
+        reader = avro.io.DatumReader(schema)
+        data = reader.read(decoder)
+        data = json.loads(data)
+        return data
+    
