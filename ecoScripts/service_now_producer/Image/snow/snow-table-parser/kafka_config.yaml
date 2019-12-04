@@ -1,9 +1,0 @@
-# Kafka details
-kafka_hostname: KAFKA_HOSTNAME
-kafka_port: KAFKA_PORT
-kafka_input_topic: KAFKA_INPUT_TOPIC
-kafka_output_topic: KAFKA_OUTPUT_TOPIC
-kafka_offset_topic: KAFKA_OFFSET_TOPIC
-
-# max size of data to be dumped in Kafka Topic
-max_request_size: 50000000

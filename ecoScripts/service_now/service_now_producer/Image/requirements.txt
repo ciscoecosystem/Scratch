@@ -1,0 +1,6 @@
+tabulate==0.8.3
+pykafka
+kafka-python
+pyyaml
+requests
+bs4

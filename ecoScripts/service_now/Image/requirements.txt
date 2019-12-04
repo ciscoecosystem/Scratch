@@ -1,7 +1,0 @@
-tabulate==0.8.3
-kafka-python
-pykafka
-pyyaml
-requests
-pymongo
-elasticsearch
