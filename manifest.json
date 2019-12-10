@@ -1,26 +1,12 @@
 [
   {
-    "name": "service_now",
-    "label": "ServiceNow",
+    "name": "service_now_producer",
+    "label": "ServiceNowProducer",
     "versions": [
-      "0.3"
+      "0.1"
     ],
-    "latest": "0.3",
-    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-dev/ecoScripts/service_now",
-    "icon": "icon.png",
-    "tags": "user",
-    "required_targets": [
-      "aci"
-    ]
-  },
-  {
-    "name": "service_now_cmdb_tag",
-    "label": "ServiceNow_CMDB_Tagging",
-    "versions": [
-      "0.3"
-    ],
-    "latest": "0.3",
-    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-dev/ecoScripts/service_now_cmdb_tag",
+    "latest": "0.1",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now_producer",
     "icon": "icon.png",
     "tags": "user",
     "required_targets": [
