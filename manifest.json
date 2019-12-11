@@ -12,5 +12,33 @@
     "required_targets": [
       "aci"
     ]
+  },
+  {
+    "name": "service_now_consumer",
+    "label": "ServiceNowConsumer",
+    "versions": [
+      "0.1"
+    ],
+    "latest": "0.1",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now/consumer",
+    "icon": "icon.png",
+    "tags": "user",
+    "required_targets": [
+      "aci"
+    ]
+  },
+  {
+    "name": "service_now_transformer",
+    "label": "ServiceNowTransformer",
+    "versions": [
+      "0.1"
+    ],
+    "latest": "0.1",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now/transformer",
+    "icon": "icon.png",
+    "tags": "user",
+    "required_targets": [
+      "aci"
+    ]
   }
 ]
