@@ -3,23 +3,21 @@ import sys
 import time
 import json
 import io
-import avro.schema
-from avro.io import DatumWriter
 import yaml
 import requests
 from pykafka import KafkaClient
 from pykafka.common import OffsetType
 from datetime import datetime, timedelta, timezone
-
-from ..utils.logger import Logger
-from exception_handler import handle_exception
-from kafka_utility import kafka_utils
+from .logger import Logger
+from .exception_handler import handle_exception
+from .kafka_utility import kafka_utils
 
 
 class snow_data:
     @handle_exception
     def __init__(self):
-        config_dict = self.load_config()
+        config_dict = self.load_config('config.yaml')
+        self.mapper_dict = self.load_config('mapper.yaml')
         self.logger = Logger.get_logger()
 
         # kafka details
@@ -46,11 +44,11 @@ class snow_data:
 
 
     @handle_exception
-    def load_config(self):
+    def load_config(self, filename):
         """
         loads the configuration from the yaml file
         """
-        filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
+        filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
         with open(filename, 'r') as stream:
             return yaml.safe_load(stream)
 
@@ -73,7 +71,7 @@ class snow_data:
         be read if there are two records in the kafka topic
         """
         offset_topic = self.kafka_utils.get_snow_offset_topic()
-        self.kafka_utils.create_consumer_topic(topic,auto_offset_reset=-1,reset_offset_on_start=True,consumer_group=None)
+        self.kafka_utils.create_consumer_topic(offset_topic,auto_offset_reset=-1,reset_offset_on_start=True,consumer_group=None)
         offset_consumer = self.kafka_utils.get_consumer()
         for p, op in offset_consumer._partitions.items():
             # if there are less than 2 records in kafka topic, write the offset twice
@@ -93,7 +91,7 @@ class snow_data:
         offset_topic = self.kafka_utils.get_snow_offset_topic()
         offset_producer = offset_topic.get_sync_producer()
         current_query_time = str(current_query_time)
-        offset_producer.produce(current_query_time)
+        offset_producer.produce(str.encode(current_query_time))
 
 
     @handle_exception
@@ -151,27 +149,16 @@ class snow_data:
             query = '{}^ORtablename={}'.format(query, table)
         return query
 
-
     @handle_exception
-    def create_ci_info(self, response, category):
-        """
-        adds the discovery_source, source_instance and category
-        to the response
-        """
-        response['discovery_source'] = self.discovery_source
-        response['source_instance'] = self.source_instance
-        response['category'] = category
-        return response
-
-
-
-    @handle_exception
-    def parse_and_write_to_kafka(response, schema_path):
+    def parse_and_write_to_kafka(self, response, category):
         result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
                                   'source_instance': self.source_instance}
-        for resp in response['result']:
-            result['result'].append(self.kafka_utils.convert_to_schema( resp, schema_path))
-        result = self.kafka_utils.convert_to_schema(result, "schema/ParentSchema.avsc")
+        for each in response['result']:
+            resp = {}
+            for key in self.mapper_dict[category].keys():
+                resp[key] = each[self.mapper_dict[category][key]]
+            result['result'].append(resp)
+        result = json.dumps(result)
         self.kafka_utils.write_data(result)
 
 
@@ -192,21 +179,19 @@ class snow_data:
             response = self.read_data(tablename, query)
 
         if len(response['result']) > 0:
-            # response = self.create_ci_info(response, category)
             self.logger.info('Writing the data in the kafka topic')
 
             if tablename == self.parent_table:
-                self.parse_and_write_to_kafka(response, "schema/EPSchema.avsc")
+                self.parse_and_write_to_kafka(response, category)
 
             elif tablename == self.relationship_type_table:
-                self.parse_and_write_to_kafka(response, "schema/ReltypeSchema.avsc")
+                self.parse_and_write_to_kafka(response, category)
 
             elif tablename == self.relationship_table:
-                self.parse_and_write_to_kafka(response, "schema/RelSchema.avsc")
+                self.parse_and_write_to_kafka(response, category)
     
             elif tablename == self.delete_table:
-                self.parse_and_write_to_kafka(response, "schema/DelSchema.avsc")
-
+                self.parse_and_write_to_kafka(response, category)
 
     @handle_exception
     def start_timer(self):
@@ -249,7 +234,7 @@ class snow_data:
 
                 # This is to slow down the producer
                 # because beam is not able to get rel_type while processing rel
-                # slowing down the producers solves the probleam
+                # slowing down the producers solves the problem
                 time.sleep(3)
 
                 # TODO: remove type.sys_id filter from the below query and rel type should also be configurable by customer

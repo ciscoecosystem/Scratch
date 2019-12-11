@@ -18,8 +18,7 @@ def main():
     kafka_error_topic = "error_" + kafka_input_topic
 
 
-    Avro installation
-    subprocess.Popen(["sh", "install_avro.sh"]).wait()
+
     
     connector = subprocess.Popen(["python", "-m", "integration.aurora_snow_connector"])
     connector.wait()

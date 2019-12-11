@@ -1,0 +1,14 @@
+ep : 
+    ip_address : ip_address
+    mac_address: mac_address
+    name: name
+    sys_id: sys_id 
+
+reltype:
+    name: name
+    sys_id: sys_id
+
+rel: 
+    parent: parent
+    child: child
+    type: type
