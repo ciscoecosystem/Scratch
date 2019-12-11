@@ -11,7 +11,7 @@ import yaml
 # from consumer.logger import Logger
 
 # relative imports
-from ..logger import Logger
+from .logger import Logger
 
 class APIC:
     """Interface for HTTP requests to APIC

@@ -2,13 +2,12 @@ import signal
 import threading
 
 # absolute imports
-# import consumer.app_threads
+from . import app_threads
 # from consumer.logger import Logger
 # from consumer.apic import APIC
 
 # relative imports
-from .. import consumer
-from ..logger import Logger
+from .logger import Logger
 
 exit = threading.Event() # condition in all looping threads, exit when set
 lock = threading.Lock() # global lock for the consumer; does not impact performance due to Python GIL
@@ -38,12 +37,12 @@ def main():
     logger.info("Starting consumer")
 
     logger.info("Starting APIC cookie thread")
-    apic_thread = consumer.app_threads.APICThread(exit, lock)
+    apic_thread = app_threads.APICThread(exit, lock)
     apic_thread.start()
     logger.info("APIC cookie thread started successfully")
 
     logger.info("Starting Kafka consumer thread")
-    epg_thread = consumer.app_threads.ConsumerThread(exit, lock)
+    epg_thread = app_threads.ConsumerThread(exit, lock)
     epg_thread.start()
     logger.info("Consumer thread started successfully")
 

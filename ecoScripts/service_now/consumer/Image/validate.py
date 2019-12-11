@@ -3,10 +3,10 @@ import json
 import os
 import sys
 
-import kafka
+from pykafka import KafkaClient
 import requests
 from pymongo import MongoClient
-from kafka.admin import KafkaAdminClient, NewTopic
+# from kafka.admin import KafkaAdminClient, NewTopic
 from pymongo.errors import ConnectionFailure
 from integration.apic import APIC
 
@@ -101,20 +101,21 @@ def test_kafka():
 
     try:
         host = '{}:{}'.format(kafka_ip, kafka_port)
-        client = KafkaAdminClient(bootstrap_servers=host)
-        simple_client = kafka.SimpleClient(host)
+        client = KafkaClient(hosts=host)
 
         pigeon.sendInfoMessage("Kafka connected successfully")
         pigeon.sendInfoMessage("Testing Kafka Input/Output topic")
 
-        broker_topics = simple_client.topic_partitions
         data_topics = [inp_topic, out_topic, offset_topic, input_error_topic, output_error_topic]
-        topic_exists = False
+        existing_topics = client.topics.keys()
         for curr_topic in data_topics:
             if curr_topic:
-                if curr_topic not in broker_topics:
-                    create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
-                    client.create_topics(create_topics)
+                if curr_topic not in existing_topics:
+                    #it will create new topic pa
+                    client.topics[curr_topic]
+                    #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka
+                    #so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
+                    #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
                     pigeon.sendInfoMessage("Topics created")
                 else:
                     pigeon.sendInfoMessage("Topic already exists: " + curr_topic)

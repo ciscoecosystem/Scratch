@@ -9,8 +9,6 @@ TODO:
 import json
 import os
 import threading
-
-import kafka.errors
 import pymongo
 import pymongo.errors
 import requests
@@ -26,9 +24,9 @@ from pymongo import MongoClient
 
 # relative imports
 from .apic import APIC
-from ..logger import Logger
+from .logger import Logger
 from .database import Database
-from kafka_utility import kafka_utils
+from .kafka_utility import kafka_utils
 
 
 class AuroraThread(threading.Thread):
@@ -86,8 +84,6 @@ class ConsumerThread(AuroraThread):
     Set up APIC, Kafka consumer, and database and wait for messages on Kafka
     Take each message and process them based on message type
     """
-    self.PARENT_SCHEMA = '.\schema\ParentSchema.avsc'
-    self.CHILD_SCHEMA = {'ep':'.\schema\APICEpSchema.avsc','epg':'.\schema\APICEpgSchema.avsc','contract':'.\schema\APICContractSchema.avsc'}
     def __init__(self, exit, lock):
         super(ConsumerThread, self).__init__(exit, lock)
 
@@ -114,7 +110,7 @@ class ConsumerThread(AuroraThread):
             self.logger.info("Connecting to MongoDB")
             self.db = Database(host=self.config['mongo_host'], port=self.config['mongo_port'])
             self.logger.info("Successfully connected to MongoDB")
-        except (kafka.errors.NoBrokersAvailable, pymongo.errors.ConnectionFailure) as error:
+        except Exception as error:
             self.logger.error(str(error))
             self.exit.set()
             self.logger.info("Consumer thread exiting")
@@ -124,17 +120,15 @@ class ConsumerThread(AuroraThread):
             self.apic = APIC.get_apic()
 
         self.logger.info("Waiting for messages from Kafka")
+        self.consumer = self.kafka_utils.get_consumer()
         while not self.exit.is_set():
-            msg_pack = self.kafka_utils.get_consumer().poll()
             # This is for commit sync in Kafka.
-            self.kafka_utils.get_consumer().commit()
             
-            for tp, messages in msg_pack.items():
-                for msg in messages:
-                    self.logger.info("Received message from Kafka")
-                    self.process_message(msg)
-                    if self.exit.is_set():
-                        break
+            for msg in self.consumer:
+                self.logger.info("Received message from Kafka")
+                self.process_message(msg)
+                if self.exit.is_set():
+                    break
         self.logger.info("Closing Kafka consumer")
         self.kafka_utils.get_consumer().close()
         self.logger.info("Consumer thread exited succesfully")
@@ -145,32 +139,31 @@ class ConsumerThread(AuroraThread):
         """
         try:
             try:
-                props = self.kafka_utils.unparse_avro_from_kafka(msg, self.PARENT_SCHEMA,True)
-                category = props['category']
-                del props['category']
-                props = self.kafka_utils.unparse_avro_from_kafka(props, self.CHILD_SCHEMA.get(category),False)                                 
+                props = json.loads(msg.value)
+                msg_type = props['msg_type']
+                del props['msg_type']
                 props['_id'] = props['uuid']
                 status = props['status']
                 del props['uuid'], props['status']
             except Exception as e:
                 raise CheckpointException('Parsing', 'APIC and DB', msg, "Some error occured while processing endpoint message, Error: {}".format(str(e)))
             
-            if category == 'ep':
+            if msg_type == 'ep':
                 self.logger.info("Received endpoint message")
                 self.process_endpoint_message(props, status)
-            elif category == 'epg':
+            elif msg_type == 'epg':
                 self.logger.info("Received grouping message")
                 self.process_grouping_message(props, status)
-            elif category == 'contract':
+            elif msg_type == 'contract':
                 self.logger.info("Received contract message")
                 self.process_contract_message(props, status)
             else:
                 self.logger.error("Received invalid message type")
         except CheckpointException as e:
             self.logger.error("Dumping message to error topic {}".format(str(e.data)))
-            error_topic = kafka_utils.get_consumer_error_topic()
+            error_topic = self.kafka_utils.get_consumer_error_topic()
             self.kafka_utils.create_producer_topic(error_topic)
-            self.kafka_utils.write_data(e.data)
+            self.kafka_utils.write_data(str(e.data))
 
 
     def process_endpoint_message(self, props, status):
