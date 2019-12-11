@@ -23,7 +23,6 @@ pigeon.sendInfoMessage("Container has started.")
 pigeon.sendInfoMessage(json.dumps(dict(os.environ), indent=2))
 
 if os.getenv('ACTION'):
-    pigeon.sendInfoMessage("Starting mongo")
     # time.sleep(0.5) # TODO remove or figure out, giving server time to startup
 
     pigeon.sendInfoMessage("Starting action")
@@ -31,6 +30,8 @@ if os.getenv('ACTION'):
         subprocess.call(["python", "validate.py", "snow"])
     elif os.environ['ACTION'] == 'TEST_KAFKA_CONNECTIVITY':
         subprocess.call(["python", "validate.py", "kafka"])
+    elif os.environ['ACTION'] == 'VALIDATE':
+        subprocess.call(["python", "validate.py"])
     elif os.environ['ACTION'] == 'RUN_INTEGRATION':
         subprocess.call(["python", "run_integration.py"])
     elif os.environ['ACTION'] == 'CUSTOM':
