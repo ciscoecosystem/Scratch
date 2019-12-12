@@ -9,7 +9,7 @@ This transformer shall take the data of EP's,Reltypes and Rels from producer top
 
 ### Configuration
 
-This section desribes how to configure a **deployment** of the Transformer image. 
+This section desribes how to configure a **deployment** of the Transformer image. There should be a jar file in the Image folder before creating build once this code is pulled on server. This jar file should have the code for transformer which should be Apache beam transformations pertaining to the usecase.
 
 ### Connection Parameters
 
