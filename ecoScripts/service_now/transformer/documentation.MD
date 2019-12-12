@@ -1,29 +1,33 @@
-## ![alt text](https://raw.githubusercontent.com/ciscoecosystem/Scratch/max-test/ecoScripts/service_now/icon.png "Logo") ServiceNow
+## ![alt text](https://raw.githubusercontent.com/ciscoecosystem/Scratch/max-test/ecoScripts/service_now/icon.png "Logo") ServiceNow Transformer
 
 ### Overview
-The ServiceNow integration ...
+Transformer for The ServiceNow Integration
 
 ### Behavior
 
-#### TODO add more
+This transformer shall take the data of EP's,Reltypes and Rels from producer topic and forms EPG's and Contracts and pushes to consumer topic.
 
 ### Configuration
 
-This section desribes how to configure a **deployment** of the ServiceNow image. There are three sections of configuration parameters.
+This section desribes how to configure a **deployment** of the Transformer image. 
 
-#### Connection Parameters
+### Connection Parameters
 
-- **ServiceNow URL** is the URL for Infoblox. Include HTTP or HTTPS in this field.
-- **ServiceNow Username** specifies the login ID to be used each time this deployment runs. \
-- **ServiceNow Password** is the login password for the username specified above. ecohub uses this password to connect to ServiceNow every time, this field must be updated if the user's password changes.
+#### Kafka Options
 
-#### ACI Options
+- **Kafka Hostname or IP** is the Kafka Host/IP(just the ip address and no prefix or suffix), where the producer shall dump data for transformer.
+- **Kafka Port** specifies the port number for Kafka.
+- **Producer Topic** is the kafka topic where the Producer shall dump data and Transformer shall read it.
+- **Consumer Topic** is the kafka topic where the Transformer shall dump data and Consumer shall read it.
 
-- **Tenant Name** is the tenant under which the integration will push segmentation configuration to.
-- **Application Profile** is the application profile for the above tenant under which EPGs will be configured.
+#### Elasticsearch Options
 
-#### *Renaming attributes
+- **ES Hostname or IP** is the Elasticsearch Host/IP(just the ip address and no prefix or suffix), which shall be used by Transformer to create indices required for the transformations.
+- **ES Port** specifies the port number for Elasticsearch.
 
-Each parameter in the configuration screen that can be enabled/disabled can also be renamed. For example, the user might want to push `Hostname` to Tetration but search for it using a different parameter name (like `Infoblox Hostname` or `Infoblox_Hostname`) in the Tetration user interface.
+#### Flink Options
 
-It is recommended to maintain consistent names (labels) for annotations in Tetration as Tetration considers `Infoblox Hostname` and `Infoblox_Hostname` to be completely different and unrelated fields.
+- **Flink Hostname or IP** is the Flink Host/IP(just the ip address and no prefix or suffix), which shall be served as Runner environment for Transformer jobs.
+- **Flink Port** specifies the port number for Flink.
+
+
