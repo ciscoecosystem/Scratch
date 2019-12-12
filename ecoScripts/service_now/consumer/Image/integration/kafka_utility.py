@@ -10,13 +10,18 @@ class kafka_utils:
         # kafka details
         self.kafka_hostname = os.getenv('KAFKA_HOSTNAME')
         self.kafka_port = os.environ.get('KAFKA_PORT')
-        #os.environ.get('PRODUCER_TOPIC') is output topic for producer and input topic for beam module.
-        self.producer_topic = os.environ.get('PRODUCER_TOPIC')
-        #os.environ.get('CONSUMER_TOPIC') is input topic for consumer and output topic for beam module.
-        self.consumer_topic = os.environ.get('CONSUMER_TOPIC')
-        self.kafka_error_topic = 'error_' + self.consumer_topic
-        #using this topic to fetch data from input system(e.g SNOW) from 'n'-duration in days which configurable on runner config page.         
-        self.kafka_offset_topic = "offset_" + self.producer_topic 
+        #Since this kafka_utility is same for producer and consumer, we have put if condition.
+        if os.environ.get('PRODUCER_TOPIC'):
+            #os.environ.get('PRODUCER_TOPIC') is output topic for producer and input topic for beam module.
+            self.producer_topic = os.environ.get('PRODUCER_TOPIC')
+            #using this topic to fetch data from input system(e.g SNOW) from 'n'-duration in days which configurable on runner config page.         
+            self.kafka_offset_topic = "offset_" + strself.producer_topic
+        
+        if os.environ.get('CONSUMER_TOPIC'):
+            #os.environ.get('CONSUMER_TOPIC') is input topic for consumer and output topic for beam module.
+            self.consumer_topic = os.environ.get('CONSUMER_TOPIC')
+            self.kafka_error_topic = 'error_' + self.consumer_topic
+         
 
     def create_kafka_client(self):
         self.client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port))
