@@ -11,12 +11,16 @@ This producer shall take the data of EP's,Reltypes and Rels from Service now por
 
 This section desribes how to configure a **deployment** of the ServiceNow image. There are three sections of configuration parameters.
 
-#### Connection Parameters
+### Connection Parameters
+
+#### Service Now Options
 
 - **ServiceNow URL** is the URL for Service Now. Include HTTP or HTTPS in this field.
 - **ServiceNow Username** specifies the login ID to be used each time this deployment runs. \
 - **ServiceNow Password** is the login password for the username specified above. ecohub uses this password to connect to ServiceNow every time, this field must be updated if the user's password changes.\
 - **Fetch from Duration** is the duration(in days) starting from which the user needs to fetch the data from Service Now.
+
+#### Kafka Options
 
 - **Kafka Hostname or IP** is the Kafka Host/IP(just the ip address and no prefix or suffix), where the producer shall dump data for transformer
 - **Kafka Port** specifies the port number for Kafka.
