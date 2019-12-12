@@ -13,13 +13,15 @@ This section desribes how to configure a **deployment** of the ServiceNow image.
 
 #### Connection Parameters
 
-- **Kafka Hostname or IP** is the Kafka Host/IP(just the ip address and no prefix or suffix), where the producer shall dump data for transformer
-- **Kafka Port** specifies the port number for Kafka.
-- **Consumer Topic** is the kafka topic from where consumer shall read the data which was dumped by transformer.
+  #### Kafka Options
 
-#### ACI Options
+  - **Kafka Hostname or IP** is the Kafka Host/IP(just the ip address and no prefix or suffix), where the producer shall dump data for  transformer
+  - **Kafka Port** specifies the port number for Kafka.
+  - **Consumer Topic** is the kafka topic from where consumer shall read the data which was dumped by transformer.
 
-- **Tenant Name** is the tenant under which the integration will push segmentation configuration to.
-- **Application Profile** is the application profile for the above tenant under which EPGs and Contracts will be configured.
+  #### ACI Options
+
+  - **Tenant Name** is the tenant under which the integration will push segmentation configuration to.
+  - **Application Profile** is the application profile for the above tenant under which EPGs and Contracts will be configured.
 
 
