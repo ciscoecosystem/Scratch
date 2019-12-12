@@ -20,5 +20,5 @@ This section desribes how to configure a **deployment** of the ServiceNow image.
 
 - **Kafka Hostname or IP** is the Kafka Host/IP(just the ip address and no prefix or suffix), where the producer shall dump data for transformer
 - **Kafka Port** specifies the port number for Kafka.
-- **Producer Output Topic** is the kafka topic where the Producer shall dump data.
+- **Producer Topic** is the kafka topic where the Producer shall dump data.
 
