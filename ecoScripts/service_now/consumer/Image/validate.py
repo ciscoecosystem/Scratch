@@ -108,9 +108,14 @@ def test_kafka():
 
         data_topics = [inp_topic, out_topic, offset_topic, input_error_topic, output_error_topic]
         existing_topics = client.topics.keys()
+        existing_topics_list = []
+        for each in existing_topics:
+            existing_topics_list.append(each.decode("utf-8"))
+            
+        topic_exists = False
         for curr_topic in data_topics:
             if curr_topic:
-                if curr_topic not in existing_topics:
+                if curr_topic not in existing_topics_list:
                     #it will create new topic pa
                     client.topics[curr_topic]
                     #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka
@@ -123,8 +128,6 @@ def test_kafka():
             else:
                 pigeon.sendInfoMessage("Topic does not exist")
 
-        client.close()
-        simple_client.close()
 
         if topic_exists:
             pigeon.sendUpdate({
@@ -133,16 +136,13 @@ def test_kafka():
             })
             return False
 
-        client.close()
-        simple_client.close()
-
         ''' In case there is need to delete the topics 
             for curr_topic in broker_topics:
                  print(curr_topic)
             client.delete_topics(broker_topics)
         '''
 
-    except kafka.errors.NoBrokersAvailable as error:
+    except Exception as error:
         pigeon.sendUpdate({
             'status': 'error',
             'message': 'Cannot connect to Kafka server'
