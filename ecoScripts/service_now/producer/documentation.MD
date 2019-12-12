@@ -9,7 +9,7 @@ This producer shall take the data of EP's,Reltypes and Rels from Service now por
 
 ### Configuration
 
-This section desribes how to configure a **deployment** of the ServiceNow image. There are three sections of configuration parameters.
+This section desribes how to configure a **deployment** of the ServiceNow image.
 
 ### Connection Parameters
 
