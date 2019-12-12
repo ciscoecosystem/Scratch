@@ -10,19 +10,19 @@ class kafka_utils:
         # kafka details
         self.kafka_hostname = os.getenv('KAFKA_HOSTNAME')
         self.kafka_port = os.environ.get('KAFKA_PORT')
-        #os.environ.get('KAFKA_INPUT_TOPIC') is output topic for producer and input topic for beam module.
-        self.kafka_output_topic = os.environ.get('KAFKA_INPUT_TOPIC')
-        #os.environ.get('KAFKA_INPUT_TOPIC') is input topic for consumer and output topic for beam module.
-        self.kafka_input_topic = os.environ.get('KAFKA_OUTPUT_TOPIC')
-        self.kafka_error_topic = 'error_' + self.kafka_input_topic
+        #os.environ.get('PRODUCER_TOPIC') is output topic for producer and input topic for beam module.
+        self.producer_topic = os.environ.get('PRODUCER_TOPIC')
+        #os.environ.get('CONSUMER_TOPIC') is input topic for consumer and output topic for beam module.
+        self.consumer_topic = os.environ.get('CONSUMER_TOPIC')
+        self.kafka_error_topic = 'error_' + self.consumer_topic
         #using this topic to fetch data from input system(e.g SNOW) from 'n'-duration in days which configurable on runner config page.         
-        self.kafka_offset_topic = "offset-" + self.kafka_output_topic + "-" + self.kafka_input_topic
+        self.kafka_offset_topic = "offset-" + self.producer_topic 
 
     def create_kafka_client(self):
         self.client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port))
 
     def get_producer_output_topic(self):
-        return self.client.topics[self.kafka_output_topic]
+        return self.client.topics[self.producer_topic]
         
     def get_snow_offset_topic(self):
         return self.client.topics[self.kafka_offset_topic]
@@ -37,7 +37,7 @@ class kafka_utils:
         self.producer.produce(str.encode(write_data))
 
     def get_consumer_input_topic(self):
-        return self.client.topics[self.kafka_input_topic]
+        return self.client.topics[self.consumer_topic]
 
     def create_consumer_topic(self,topic,auto_offset_reset=-2,reset_offset_on_start=False,consumer_group=None):
         #auto_offset_reset -2 for earliest and -1 for latest. default is -2
