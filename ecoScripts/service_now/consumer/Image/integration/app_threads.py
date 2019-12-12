@@ -13,8 +13,6 @@ import pymongo
 import pymongo.errors
 import requests
 import yaml
-from kafka import KafkaConsumer
-from kafka import KafkaProducer
 from pymongo import MongoClient
 
 # absolute import
