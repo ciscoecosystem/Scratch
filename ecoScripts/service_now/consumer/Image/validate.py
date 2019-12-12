@@ -91,12 +91,8 @@ def test_aci():
 def test_kafka():
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
-    inp_topic = os.getenv('KAFKA_INPUT_TOPIC')
-    out_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
+    out_topic = os.getenv('CONSUMER_TOPIC')
 
-    # offset_topic = os.getenv("KAFKA_OFFSET_TOPIC")
-    offset_topic = "offset_" + inp_topic + "_" + out_topic
-    input_error_topic = "error_" + inp_topic
     output_error_topic = "error_" + out_topic
 
     try:
@@ -106,7 +102,7 @@ def test_kafka():
         pigeon.sendInfoMessage("Kafka connected successfully")
         pigeon.sendInfoMessage("Testing Kafka Input/Output topic")
 
-        data_topics = [inp_topic, out_topic, offset_topic, input_error_topic, output_error_topic]
+        data_topics = [out_topic, output_error_topic]
         existing_topics = client.topics.keys()
         existing_topics_list = []
         for each in existing_topics:
@@ -114,19 +110,17 @@ def test_kafka():
             
         topic_exists = False
         for curr_topic in data_topics:
-            if curr_topic:
-                if curr_topic not in existing_topics_list:
-                    #it will create new topic pa
-                    client.topics[curr_topic]
-                    #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka
-                    #so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
-                    #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
-                    pigeon.sendInfoMessage("Topics created")
-                else:
-                    pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
-                    topic_exists = True
+            if curr_topic not in existing_topics_list:
+                #it will create new topic pa
+                client.topics[curr_topic]
+                #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka
+                #so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
+                #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
+                pigeon.sendInfoMessage("Topics created")
             else:
-                pigeon.sendInfoMessage("Topic does not exist")
+                pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
+                topic_exists = True
+            
 
 
         if topic_exists:

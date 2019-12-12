@@ -16,7 +16,7 @@ class kafka_utils:
         self.consumer_topic = os.environ.get('CONSUMER_TOPIC')
         self.kafka_error_topic = 'error_' + self.consumer_topic
         #using this topic to fetch data from input system(e.g SNOW) from 'n'-duration in days which configurable on runner config page.         
-        self.kafka_offset_topic = "offset-" + self.producer_topic 
+        self.kafka_offset_topic = "offset_" + self.producer_topic 
 
     def create_kafka_client(self):
         self.client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port))
