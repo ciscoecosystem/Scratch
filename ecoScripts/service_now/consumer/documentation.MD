@@ -11,7 +11,7 @@ This Consumer shall read Kafka topic for EPG's and Contracts and push it in ACI
 
 This section desribes how to configure a **deployment** of the ServiceNow image. There are three sections of configuration parameters.
 
-#### Connection Parameters
+### Connection Parameters
 
   #### Kafka Options
 
