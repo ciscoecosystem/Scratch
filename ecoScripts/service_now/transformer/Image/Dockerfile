@@ -2,9 +2,6 @@
 FROM centos:latest
 LABEL Project=ecoHub Name=Aurora Version=0.0.1
 
-
-RUN yum install -y mongodb-org
-
 # install yum requirements
 RUN yum install -y centos-release-scl gcc
 RUN yum install -y rh-python36
