@@ -14,8 +14,8 @@ def main():
     flink_ip = os.getenv('FLINK_HOSTNAME')
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
-    kafka_input_topic = os.getenv('KAFKA_INPUT_TOPIC')
-    kafka_output_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
+    kafka_input_topic = os.getenv('PRODUCER_TOPIC')
+    kafka_output_topic = os.getenv('CONSUMER_TOPIC')
     kafka_error_topic = "error_" + kafka_input_topic
     es_host = os.getenv('ES_HOSTNAME')
     es_port = os.getenv('ES_PORT')
@@ -31,8 +31,6 @@ def main():
             process_running = True
             break
 
-    # Avro installation
-    subprocess.Popen(["sh", "install_avro.sh"]).wait()
 
     # TODO: get consumer and connector out of if else
     if not process_running:
@@ -40,7 +38,7 @@ def main():
         pipeline = subprocess.Popen(["java", "-jar", "/app/data-pipeline-bundled-0.1.jar", "--runner=FlinkRunner",
                                      "--flinkMaster={}".format(flink_ip),
                                      "--kafkaIP={}".format(kafka_ip),
-                                     "--kafkaPort={}".format(kafka_port),ch
+                                     "--kafkaPort={}".format(kafka_port),
                                      "--kafkaInputTopic={}".format(kafka_input_topic),
                                      "--kafkaOutputTopic={}".format(kafka_output_topic),
                                      "--kafkaErrorTopic={}".format(kafka_error_topic),
@@ -49,7 +47,6 @@ def main():
                                      "--streaming=true",
                                      "--parallelism=1"])
         pipeline.wait()
-        
     else:
         pigeon.sendInfoMessage("Not starting flink pipeline as it is already running with id: "+flink_job_id+" on "+flinkUrl)
 

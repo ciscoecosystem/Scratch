@@ -34,9 +34,9 @@ if os.getenv('ACTION'):
     elif os.environ['ACTION'] == 'TEST_FLINK_CONNECTIVITY':
         subprocess.call(["python", "validate.py", "flink"])
     elif os.environ['ACTION'] == 'VALIDATE':
-        subprocess.call(["python", ".py"])
+        subprocess.call(["python", "validate.py"])
     elif os.environ['ACTION'] == 'RUN_INTEGRATION':
-        subprocess.call(["python", "run_integravalidatetion.py"])
+        subprocess.call(["python", "run_integration.py"])
     elif os.environ['ACTION'] == 'CUSTOM':
         pigeon.sendUpdate({
             'status': 'error',
