@@ -34,5 +34,19 @@
     "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now/transformer",
     "icon": "icon.png",
     "tags": "servicenow"
+  },
+  {
+    "name": "service_now",
+    "label": "ServiceNow",
+    "versions": [
+      "0.3"
+    ],
+    "latest": "0.3",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-dev/ecoScripts/service_now",
+    "icon": "icon.png",
+    "tags": "user",
+    "required_targets": [
+      "aci"
+    ]
   }
 ]
