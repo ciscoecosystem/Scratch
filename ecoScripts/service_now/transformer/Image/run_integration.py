@@ -40,7 +40,7 @@ def main():
         pipeline = subprocess.Popen(["java", "-jar", "/app/data-pipeline-bundled-0.1.jar", "--runner=FlinkRunner",
                                      "--flinkMaster={}".format(flink_ip),
                                      "--kafkaIP={}".format(kafka_ip),
-                                     "--kafkaPort={}".format(kafka_port),ch
+                                     "--kafkaPort={}".format(kafka_port),
                                      "--kafkaInputTopic={}".format(kafka_input_topic),
                                      "--kafkaOutputTopic={}".format(kafka_output_topic),
                                      "--kafkaErrorTopic={}".format(kafka_error_topic),
