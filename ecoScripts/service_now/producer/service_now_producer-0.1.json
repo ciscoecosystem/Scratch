@@ -3,7 +3,7 @@
   "type": "api",
   "configurable": true,
   "schedulable": true,
-  "docker_image": "dockerdipika/aurora:producer-dev",
+  "docker_image": "dockerdipika/aurora:producer-dev-avro",
   "config_parameters": [
     {
       "name": "snow_connection_parameters",
