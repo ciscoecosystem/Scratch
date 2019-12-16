@@ -6,7 +6,43 @@
       "0.1"
     ],
     "latest": "0.1",
-    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now/producer",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework-avro/ecoScripts/service_now/producer",
+    "icon": "icon.png",
+    "tags": "servicenow"
+  },
+  {
+    "name": "service_now_consumer",
+    "label": "ServiceNowConsumer",
+    "versions": [
+      "0.1"
+    ],
+    "latest": "0.1",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now/consumer",
+    "icon": "icon.png",
+    "tags": "servicenow",
+    "required_targets": [
+      "aci"
+    ]
+  },
+  {
+    "name": "service_now_transformer",
+    "label": "ServiceNowTransformer",
+    "versions": [
+      "0.1"
+    ],
+    "latest": "0.1",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now/transformer",
+    "icon": "icon.png",
+    "tags": "servicenow"
+  },
+  {
+    "name": "service_now",
+    "label": "ServiceNow",
+    "versions": [
+      "0.3"
+    ],
+    "latest": "0.3",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-dev/ecoScripts/service_now",
     "icon": "icon.png",
     "tags": "user",
     "required_targets": [
