@@ -11,7 +11,7 @@ from pykafka import KafkaClient
 from pykafka.common import OffsetType
 from datetime import datetime, timedelta, timezone
 
-from ..utils.logger import Logger
+from .logger import Logger
 from exception_handler import handle_exception
 from kafka_utility import kafka_utils
 
