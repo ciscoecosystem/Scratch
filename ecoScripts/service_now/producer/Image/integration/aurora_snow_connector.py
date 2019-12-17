@@ -12,8 +12,8 @@ from pykafka.common import OffsetType
 from datetime import datetime, timedelta, timezone
 
 from .logger import Logger
-from exception_handler import handle_exception
-from kafka_utility import kafka_utils
+from .exception_handler import handle_exception
+from .kafka_utility import kafka_utils
 
 
 class snow_data:
