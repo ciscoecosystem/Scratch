@@ -3,10 +3,9 @@ import json
 import os
 import sys
 
-import kafka
 import requests
+from pykafka import KafkaClient
 
-from kafka.admin import KafkaAdminClient, NewTopic
 
 
 from pigeon import Pigeon
@@ -60,39 +59,36 @@ def test_snow():
 def test_kafka():
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
-    inp_topic = os.getenv('KAFKA_INPUT_TOPIC')
-    out_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
+    inp_topic = os.getenv('PRODUCER_TOPIC')
 
-    # offset_topic = os.getenv("KAFKA_OFFSET_TOPIC")
-    offset_topic = "offset_" + inp_topic + "_" + out_topic
-    input_error_topic = "error_" + inp_topic
-    output_error_topic = "error_" + out_topic
-
+    offset_topic = "offset_" + inp_topic
     try:
         host = '{}:{}'.format(kafka_ip, kafka_port)
-        client = KafkaAdminClient(bootstrap_servers=host)
-        simple_client = kafka.SimpleClient(host)
+        client = KafkaClient(hosts=host)
 
         pigeon.sendInfoMessage("Kafka connected successfully")
         pigeon.sendInfoMessage("Testing Kafka Input/Output topic")
 
-        broker_topics = simple_client.topic_partitions
-        data_topics = [inp_topic, out_topic, offset_topic, input_error_topic, output_error_topic]
+        data_topics = [inp_topic, offset_topic]
+        existing_topics = client.topics.keys()
+        existing_topics_list = []
+        for each in existing_topics:
+            existing_topics_list.append(each.decode("utf-8"))
+            
         topic_exists = False
         for curr_topic in data_topics:
-            if curr_topic:
-                if curr_topic not in broker_topics:
-                    create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
-                    client.create_topics(create_topics)
-                    pigeon.sendInfoMessage("Topics created")
-                else:
-                    pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
-                    topic_exists = True
+            if curr_topic not in existing_topics_list:
+                #it will create new topic pa
+                client.topics[curr_topic]
+                #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka \
+                # so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
+                #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
+                pigeon.sendInfoMessage("Topics created")
             else:
-                pigeon.sendInfoMessage("Topic does not exist")
+                pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
+                topic_exists = True
+            
 
-        client.close()
-        simple_client.close()
 
         if topic_exists:
             pigeon.sendUpdate({
@@ -101,16 +97,7 @@ def test_kafka():
             })
             return False
 
-        client.close()
-        simple_client.close()
-
-        ''' In case there is need to delete the topics 
-            for curr_topic in broker_topics:
-                 print(curr_topic)
-            client.delete_topics(broker_topics)
-        '''
-
-    except kafka.errors.NoBrokersAvailable as error:
+    except Exception as error:
         pigeon.sendUpdate({
             'status': 'error',
             'message': 'Cannot connect to Kafka server'

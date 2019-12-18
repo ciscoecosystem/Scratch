@@ -73,7 +73,7 @@ class snow_data:
         be read if there are two records in the kafka topic
         """
         offset_topic = self.kafka_utils.get_snow_offset_topic()
-        self.kafka_utils.create_consumer_topic(topic,auto_offset_reset=-1,reset_offset_on_start=True,consumer_group=None)
+        self.kafka_utils.create_consumer_topic(offset_topic,auto_offset_reset=-1,reset_offset_on_start=True,consumer_group=None)
         offset_consumer = self.kafka_utils.get_consumer()
         for p, op in offset_consumer._partitions.items():
             # if there are less than 2 records in kafka topic, write the offset twice
@@ -93,7 +93,7 @@ class snow_data:
         offset_topic = self.kafka_utils.get_snow_offset_topic()
         offset_producer = offset_topic.get_sync_producer()
         current_query_time = str(current_query_time)
-        offset_producer.produce(current_query_time)
+        offset_producer.produce(str.encode(current_query_time))
 
 
     @handle_exception
@@ -166,7 +166,7 @@ class snow_data:
 
 
     @handle_exception
-    def parse_and_write_to_kafka(response, schema_path):
+    def parse_and_write_to_kafka(self, response, category, schema_path):
         result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
                                   'source_instance': self.source_instance}
         for resp in response['result']:
@@ -196,16 +196,16 @@ class snow_data:
             self.logger.info('Writing the data in the kafka topic')
 
             if tablename == self.parent_table:
-                self.parse_and_write_to_kafka(response, "schema/EPSchema.avsc")
+                self.parse_and_write_to_kafka(response, category, "schema/EPSchema.avsc")
 
             elif tablename == self.relationship_type_table:
-                self.parse_and_write_to_kafka(response, "schema/ReltypeSchema.avsc")
+                self.parse_and_write_to_kafka(response, category, "schema/ReltypeSchema.avsc")
 
             elif tablename == self.relationship_table:
-                self.parse_and_write_to_kafka(response, "schema/RelSchema.avsc")
+                self.parse_and_write_to_kafka(response, category, "schema/RelSchema.avsc")
     
             elif tablename == self.delete_table:
-                self.parse_and_write_to_kafka(response, "schema/DelSchema.avsc")
+                self.parse_and_write_to_kafka(response, category, "schema/DelSchema.avsc")
 
 
     @handle_exception
