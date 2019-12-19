@@ -3,7 +3,7 @@
   "type": "api",
   "configurable": true,
   "schedulable": true,
-  "docker_image": "dockerdipika/aurora:transformer-dev-avro",
+  "docker_image": "dockerdipika/aurora:transformer-demo",
   "config_parameters": [
     {
       "name": "kafka_connectivity_options",
