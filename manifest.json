@@ -31,7 +31,7 @@
       "0.1"
     ],
     "latest": "0.1",
-    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now/transformer",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework-avro/ecoScripts/service_now/transformer",
     "icon": "icon.png",
     "tags": "servicenow"
   },
