@@ -12,12 +12,6 @@ def main():
     pigeon.sendInfoMessage("Starting integration")
 
     
-    kafka_ip = os.getenv('KAFKA_HOSTNAME')
-    kafka_port = os.getenv('KAFKA_PORT')
-    kafka_input_topic = os.getenv('KAFKA_INPUT_TOPIC')
-    kafka_output_topic = os.getenv('KAFKA_OUTPUT_TOPIC')
-    kafka_error_topic = "error_" + kafka_input_topic
-    
     subprocess.Popen(["sh", "install_avro.sh"]).wait()
 
     

@@ -19,7 +19,6 @@ def test_kafka():
     inp_topic = os.getenv('PRODUCER_TOPIC')
     out_topic = os.getenv('CONSUMER_TOPIC')
 
-    offset_topic = "offset_" + inp_topic + "_" + out_topic
     input_error_topic = "error_" + inp_topic
 
     try:
@@ -29,7 +28,7 @@ def test_kafka():
         pigeon.sendInfoMessage("Kafka connected successfully")
         pigeon.sendInfoMessage("Testing Kafka Input/Output topic")
 
-        data_topics = [inp_topic, out_topic, offset_topic, input_error_topic]
+        data_topics = [inp_topic, out_topic, input_error_topic]
         existing_topics = client.topics.keys()
         existing_topics_list = []
         for each in existing_topics:

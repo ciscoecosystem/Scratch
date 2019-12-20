@@ -3,7 +3,7 @@
   "type": "api",
   "configurable": true,
   "schedulable": true,
-  "docker_image": "dockerdipika/aurora:consumer-dev",
+  "docker_image": "dockerdipika/aurora:consumer-dev-avro",
   "config_parameters": [
     {
       "name": "aci_parameters",
@@ -82,23 +82,13 @@
           "verify": false
         },
        {
-          "name": "kakfa_in_topic",
-          "label": "Pipeline Input topic",
+          "name": "consumer_topic",
+          "label": "Consumer Topic",
           "type": "text",
-          "environment_variable_name": "KAFKA_INPUT_TOPIC",
-          "placeholder": "Pipeline Input Topic",
+          "environment_variable_name": "CONSUMER_TOPIC",
+          "placeholder": "Consumer Topic",
           "required": true,
           "order": 3,
-          "verify": false
-	},
-	{
-          "name": "kakfa_op_topic",
-          "label": "Pipeline Output topic",
-          "type": "text",
-          "environment_variable_name": "KAFKA_OUTPUT_TOPIC",
-          "placeholder": "Pipeline Output Topic",
-          "required": true,
-          "order": 4,
           "verify": false
 	}
       ]

@@ -9,14 +9,10 @@ TODO:
 import json
 import os
 import threading
-
-import kafka.errors
 import pymongo
 import pymongo.errors
 import requests
 import yaml
-from kafka import KafkaConsumer
-from kafka import KafkaProducer
 from pymongo import MongoClient
 
 # absolute import
@@ -26,9 +22,9 @@ from pymongo import MongoClient
 
 # relative imports
 from .apic import APIC
-from ..logger import Logger
+from .logger import Logger
 from .database import Database
-from kafka_utility import kafka_utils
+from .kafka_utility import kafka_utils
 
 
 class AuroraThread(threading.Thread):
@@ -114,7 +110,7 @@ class ConsumerThread(AuroraThread):
             self.logger.info("Connecting to MongoDB")
             self.db = Database(host=self.config['mongo_host'], port=self.config['mongo_port'])
             self.logger.info("Successfully connected to MongoDB")
-        except (kafka.errors.NoBrokersAvailable, pymongo.errors.ConnectionFailure) as error:
+        except Exception as error:
             self.logger.error(str(error))
             self.exit.set()
             self.logger.info("Consumer thread exiting")
@@ -124,17 +120,15 @@ class ConsumerThread(AuroraThread):
             self.apic = APIC.get_apic()
 
         self.logger.info("Waiting for messages from Kafka")
+        self.consumer = self.kafka_utils.get_consumer()
         while not self.exit.is_set():
-            msg_pack = self.kafka_utils.get_consumer().poll()
             # This is for commit sync in Kafka.
-            self.kafka_utils.get_consumer().commit()
             
-            for tp, messages in msg_pack.items():
-                for msg in messages:
-                    self.logger.info("Received message from Kafka")
-                    self.process_message(msg)
-                    if self.exit.is_set():
-                        break
+            for msg in self.consumer:
+                self.logger.info("Received message from Kafka")
+                self.process_message(msg)
+                if self.exit.is_set():
+                    break
         self.logger.info("Closing Kafka consumer")
         self.kafka_utils.get_consumer().close()
         self.logger.info("Consumer thread exited succesfully")
@@ -168,9 +162,9 @@ class ConsumerThread(AuroraThread):
                 self.logger.error("Received invalid message type")
         except CheckpointException as e:
             self.logger.error("Dumping message to error topic {}".format(str(e.data)))
-            error_topic = kafka_utils.get_consumer_error_topic()
+            error_topic = self.kafka_utils.get_consumer_error_topic()
             self.kafka_utils.create_producer_topic(error_topic)
-            self.kafka_utils.write_data(e.data)
+            self.kafka_utils.write_data(str(e.data))
 
 
     def process_endpoint_message(self, props, status):
