@@ -3,8 +3,6 @@ import sys
 import time
 import json
 import io
-import avro.schema
-from avro.io import DatumWriter
 import yaml
 import requests
 from pykafka import KafkaClient
@@ -14,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from .logger import Logger
 from .exception_handler import handle_exception
 from .kafka_utility import kafka_utils
+from .mapper_utility import Mapper
 
 
 class snow_data:
@@ -21,6 +20,7 @@ class snow_data:
     def __init__(self):
         config_dict = self.load_config()
         self.logger = Logger.get_logger()
+        self.mapper = Mapper()
 
         # kafka details
         self.initial_offset = self.get_time(os.environ.get(config_dict['initial_offset']))      
@@ -152,28 +152,15 @@ class snow_data:
         return query
 
 
-    @handle_exception
-    def create_ci_info(self, response, category):
-        """
-        adds the discovery_source, source_instance and category
-        to the response
-        """
-        response['discovery_source'] = self.discovery_source
-        response['source_instance'] = self.source_instance
-        response['category'] = category
-        return response
 
 
 
     @handle_exception
     def parse_and_write_to_kafka(self, response, category, schema_path):
-        result = {'result': [], 'category': category, 'discovery_source': self.discovery_source,
+        input_config = {'category': category, 'discovery_source': self.discovery_source,
                                   'source_instance': self.source_instance}
-        for resp in response['result']:
-            result['result'].append(self.kafka_utils.convert_to_schema( resp, schema_path))
-        result = self.kafka_utils.convert_to_schema(result, "schema/ParentSchema.avsc")
+        result = self.mapper.map_input_to_aurora(response, input_config, schema_path)   
         self.kafka_utils.write_data(result)
-
 
     @handle_exception
     def query_tables(self, tablename, last_query_time, current_query_time, query, to_filter, category):
@@ -192,12 +179,12 @@ class snow_data:
             response = self.read_data(tablename, query)
 
         if len(response['result']) > 0:
-            # response = self.create_ci_info(response, category)
             self.logger.info('Writing the data in the kafka topic')
 
             if tablename == self.parent_table:
                 self.parse_and_write_to_kafka(response, category, "schema/EPSchema.avsc")
 
+            return
             elif tablename == self.relationship_type_table:
                 self.parse_and_write_to_kafka(response, category, "schema/ReltypeSchema.avsc")
 

@@ -3,7 +3,6 @@
     "type": "record",
     "name": "RelInfo",
     "fields": [
-        {"name":"connection_strength", "type":"string"},
         {"name":"parent", "type":
             {
                 "name":"parent_fields",
@@ -15,9 +14,6 @@
                 ]
             }
         },
-        {"name":"sys_mod_count", "type":"string"},
-        {"name":"sys_updated_on", "type":"string"},
-        {"name":"sys_tags", "type":"string"},
         {"name":"type", "type":
             {
                 "name":"type_fields",
@@ -29,12 +25,6 @@
                 ]
             }
         },
-        {"name":"sys_id", "type":"string"},
-        {"name":"sys_updated_by", "type":"string"},
-        {"name":"port", "type":"string"},
-        {"name":"sys_created_on", "type":"string"},
-        {"name":"percent_outage", "type":"string"},
-        {"name":"sys_created_by", "type":"string"},
         {"name":"child", "type":
             {
                 "name":"child_fields",

@@ -3,42 +3,7 @@
     "type": "record",
     "name": "ReltypeInfo",
     "fields": [
-        {"name":"child_descriptor", "type":"string"},
-        {"name":"end_point", "type":"string"},
-        {"name":"sys_mod_count","type":"string"},
-        {"name":"sys_updated_on","type":"string"},
-        {"name":"sys_tags","type":"string"},
-        {"name":"sys_class_name","type":"string"},
-        {"name":"sys_id","type":"string"},
-        {"name":"sys_package", "type":
-            {
-                "name":"sys_package_fields",
-                "type" :"record",
-                "fields":
-                [
-                    {"name":"link", "type":"string"},
-                    {"name":"value", "type":"string"}
-                ]
-            }
-        },
-        {"name":"sys_update_name","type":"string"},
-        {"name":"sys_updated_by","type":"string"},
-        {"name":"sys_created_on","type":"string"},
         {"name":"name","type":"string"},
-        {"name":"sys_name","type":"string"},
-        {"name":"sys_scope", "type":
-            {
-                "name":"sys_scope_fields",
-                "type" :"record",
-                "fields":
-                [
-                    {"name":"link", "type":"string"},
-                    {"name":"value", "type":"string"}
-                ]
-            }
-        },
-        {"name":"parent_descriptor","type":"string"},
-        {"name":"sys_created_by","type":"string"},
-        {"name":"sys_policy","type":"string"}
+        {"name":"sys_id","type":"string"}
     ]
 }
