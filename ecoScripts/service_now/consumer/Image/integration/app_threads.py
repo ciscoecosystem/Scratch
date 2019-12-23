@@ -3,7 +3,7 @@ TODO:
 1. Writing to Error topic should be configurable/optional. A flag should be set true/false.
 2. Add comments with format expected for every message
 3. Transfer all the APIC api caller function to another file
-4. Create a overloader function to all the API call functions. It should check for the status and pass Success or faliure message
+4. Create a overloader function to all the API call functions. It should check for the status and pass Success or failure message
 """
 
 import json
@@ -61,7 +61,7 @@ class APICThread(AuroraThread):
 
         apic.logout()
         apic.close()
-        self.logger.info("APIC thread exited succesfully")
+        self.logger.info("APIC thread exited successfully")
 
 
 class CheckpointException(Exception):
@@ -82,8 +82,8 @@ class ConsumerThread(AuroraThread):
     Set up APIC, Kafka consumer, and database and wait for messages on Kafka
     Take each message and process them based on message type
     """
-    self.PARENT_SCHEMA = '.\schema\ParentSchema.avsc'
-    self.CHILD_SCHEMA = {'ep':'.\schema\APICEpSchema.avsc','epg':'.\schema\APICEpgSchema.avsc','contract':'.\schema\APICContractSchema.avsc'}
+    PARENT_SCHEMA = '.\schema\ParentSchema.avsc'
+    CHILD_SCHEMA = {'ep':'.\schema\APICEpSchema.avsc','epg':'.\schema\APICEpgSchema.avsc','contract':'.\schema\APICContractSchema.avsc'}
     def __init__(self, exit, lock):
         super(ConsumerThread, self).__init__(exit, lock)
 
@@ -131,7 +131,7 @@ class ConsumerThread(AuroraThread):
                     break
         self.logger.info("Closing Kafka consumer")
         self.kafka_utils.get_consumer().close()
-        self.logger.info("Consumer thread exited succesfully")
+        self.logger.info("Consumer thread exited successfully")
         
     def process_message(self, msg):
         """Take msg as string and get dictionary
@@ -147,7 +147,7 @@ class ConsumerThread(AuroraThread):
                 status = props['status']
                 del props['uuid'], props['status']
             except Exception as e:
-                raise CheckpointException('Parsing', 'APIC and DB', msg, "Some error occured while processing endpoint message, Error: {}".format(str(e)))
+                raise CheckpointException('Parsing', 'APIC and DB', msg, "Some error occurred while processing endpoint message, Error: {}".format(str(e)))
             
             if category == 'ep':
                 self.logger.info("Received endpoint message")
@@ -206,7 +206,7 @@ class ConsumerThread(AuroraThread):
                             self.logger.error('EP creation failed for EP {}, Error: {}'.format(endpoint, ep_res))
                             raise CheckpointException('EP', 'APIC', props, ep_res)
                     else:
-                        # This will occure when EP is updated apart from its EPG
+                        # This will occur when EP is updated apart from its EPG
                         # TODO: API to update the updated EP
                         pass
 
@@ -230,7 +230,7 @@ class ConsumerThread(AuroraThread):
         except CheckpointException as e:
             raise e
         except Exception as e:
-            raise CheckpointException('EP', 'APIC and DB', props, "Some error occured while processing endpoint message, Error: {}".format(str(e)))
+            raise CheckpointException('EP', 'APIC and DB', props, "Some error occurred while processing endpoint message, Error: {}".format(str(e)))
 
 
     def process_grouping_message(self, props, status):
@@ -297,7 +297,7 @@ class ConsumerThread(AuroraThread):
         except CheckpointException as e:
             raise e
         except Exception as e:
-            raise CheckpointException('EPG', 'APIC and DB', props, "Some error occured while processing grouping message, Error: {}".format(str(e)))
+            raise CheckpointException('EPG', 'APIC and DB', props, "Some error occurred while processing grouping message, Error: {}".format(str(e)))
 
 
     def process_contract_message(self, props, status):
@@ -394,7 +394,7 @@ class ConsumerThread(AuroraThread):
                         raise CheckpointException('Contract', 'APIC', props, attach_contract_response)
 
                 """
-                Code needed to avoid update of a contract. No need for contract update usecse in AURORA.
+                Code needed to avoid update of a contract. No need for contract update usecase in AURORA.
                 """
                 # elif props['consumer_epg'] == contract['consumer_epg'] and props['provider_epg'] == contract['provider_epg']:
                 #     self.logger.info("Contract already exists")
@@ -404,7 +404,7 @@ class ConsumerThread(AuroraThread):
                 #     removed_prov = None
 
                 """
-                Below line of code is not rechable because a contraact will never be updated as per the present implementaion.
+                Below line of code is not reachable because a contraact will never be updated as per the present implementation.
                 Useful only when there is many to many relationships for a Contract.
                 """
                 # else:
@@ -432,7 +432,7 @@ class ConsumerThread(AuroraThread):
                 #     removed_prov = contract['provider_epg'] if not props['provider_epg'] == contract['provider_epg'] else None
 
                 """
-                Code neede with above elif and else conditions only!
+                Code needed with above elif and else conditions only!
                 """
                 # # attach contract consumer/producer on APIC
                 # # associate contracts to EPG entries in database
@@ -517,7 +517,7 @@ class ConsumerThread(AuroraThread):
         except CheckpointException as e:
             raise e
         except Exception as e:
-            raise CheckpointException('Contract', 'APIC and DB', props, "Some error occured while processing contract message, Error: {}".format(str(e)))
+            raise CheckpointException('Contract', 'APIC and DB', props, "Some error occurred while processing contract message, Error: {}".format(str(e)))
 
 
     def attach_contract(self, role, tenant, ap, epg, contract, status='created,modified', delete=False):
@@ -566,7 +566,7 @@ class ConsumerThread(AuroraThread):
 
     def create_ep(self, tenant, ap, epg, endpoint, delete=False):
         """
-        Creating and Deleting an static enpoint
+        Creating and Deleting an static endpoint
         """
 
         mac_address = endpoint['mac_address']
@@ -624,7 +624,7 @@ class ConsumerThread(AuroraThread):
             self.logger.info('Endpoint whose mac address is {}, already exists'.format(mac_address))
             return 'Successful'
         else:
-            self.logger.error('Following error occured while creating mac address - {}'.format(mac_address))
+            self.logger.error('Following error occurred while creating mac address - {}'.format(mac_address))
             return "API call for EP(mac:{}) creation/deletion failed, Error: {}, Status Code: {}".format(mac_address, res.content, res.status_code)
 
     

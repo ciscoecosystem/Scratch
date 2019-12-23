@@ -184,7 +184,6 @@ class snow_data:
             if tablename == self.parent_table:
                 self.parse_and_write_to_kafka(response, category, "schema/EPSchema.avsc")
 
-            return
             elif tablename == self.relationship_type_table:
                 self.parse_and_write_to_kafka(response, category, "schema/ReltypeSchema.avsc")
 

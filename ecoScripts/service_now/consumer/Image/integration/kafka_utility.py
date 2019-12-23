@@ -3,6 +3,7 @@ import json
 import io
 import avro.schema
 from pykafka import KafkaClient
+from avro.io import DatumWriter
 
 
 
@@ -43,7 +44,7 @@ class kafka_utils:
     def get_snow_offset_topic(self):
         return self.client.topics[self.kafka_offset_topic]
     
-    def get_consumer_error_topic():
+    def get_consumer_error_topic(self):
         return self.client.topics[self.kafka_error_topic]
 
     def write_data(self,write_data):

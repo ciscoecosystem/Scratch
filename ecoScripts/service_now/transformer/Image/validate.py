@@ -13,7 +13,7 @@ pigeon = Pigeon()
 
 
 
-def test_kafka():
+def test_kafka(create_topics=False):
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
     inp_topic = os.getenv('PRODUCER_TOPIC')
@@ -28,23 +28,43 @@ def test_kafka():
         pigeon.sendInfoMessage("Kafka connected successfully")
         pigeon.sendInfoMessage("Testing Kafka Input/Output topic")
 
-        data_topics = [inp_topic, out_topic, input_error_topic]
+        data_topics = [out_topic, input_error_topic]
         existing_topics = client.topics.keys()
         existing_topics_list = []
         for each in existing_topics:
             existing_topics_list.append(each.decode("utf-8"))
+
+
+        if inp_topic not in existing_topics_list:
+            pigeon.sendUpdate({
+            'status': 'error',
+            'message': 'Please configure producer first.'
+            })
+            return False
+        
             
         topic_exists = False
         for curr_topic in data_topics:
-            client.topics[curr_topic]
-            #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka \
-            # so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
-            #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
-            pigeon.sendInfoMessage("Topics created")
+            if curr_topic not in existing_topics_list:
+                if create_topics:
+                    #it will create new topic
+                    client.topics[curr_topic]
+                    #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka \
+                    # so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
+                    #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
+                    pigeon.sendInfoMessage("Topics created")
+            else:
+                pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
+                topic_exists = True
 
 
 
-
+        if topic_exists:
+            pigeon.sendUpdate({
+                'status': 'error',
+                'message': 'Topic already exists.Please enter different output topic names.'
+            })
+            return False
         ''' In case there is need to delete the topics 
             for curr_topic in broker_topics:
                  print(curr_topic)
@@ -108,7 +128,7 @@ def test_flink():
 
 
 def validate():
-    return test_kafka() and test_es() and test_flink()
+    return test_es() and test_flink() and test_kafka(create_topics=True)
 
 
 if __name__ == "__main__":
@@ -122,7 +142,7 @@ if __name__ == "__main__":
             }, last=True)  # REVIEW When does last=True?
 
     elif sys.argv[1] == 'kafka':
-        if test_kafka():
+        if test_kafka(create_topics=False):
             pigeon.sendUpdate({
                 'status': 200,
                 'message': 'Test Kafka Connectivity successful'

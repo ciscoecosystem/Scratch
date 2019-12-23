@@ -56,7 +56,7 @@ def test_snow():
         return False
 
 
-def test_kafka():
+def test_kafka(create_topics=False):
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
     inp_topic = os.getenv('PRODUCER_TOPIC')
@@ -79,11 +79,12 @@ def test_kafka():
         for curr_topic in data_topics:
             if curr_topic not in existing_topics_list:
                 #it will create new topic pa
-                client.topics[curr_topic]
-                #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka \
-                # so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
-                #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
-                pigeon.sendInfoMessage("Topics created")
+                if create_topics:
+                    client.topics[curr_topic]
+                    #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka \
+                    # so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
+                    #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
+                    pigeon.sendInfoMessage("Topics created")
             else:
                 pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
                 topic_exists = True
@@ -108,7 +109,7 @@ def test_kafka():
 
 
 def validate():
-    return test_kafka() and test_snow()
+    return test_snow() and test_kafka(create_topics=True)
 
 if __name__ == "__main__":
     pigeon.sendInfoMessage("In validate.main()")
@@ -128,7 +129,7 @@ if __name__ == "__main__":
             }, last=True)
 
     elif sys.argv[1] == 'kafka':
-        if test_kafka():
+        if test_kafka(create_topics=False):
             pigeon.sendUpdate({
                 'status': 200,
                 'message': 'Test Kafka Connectivity successful'

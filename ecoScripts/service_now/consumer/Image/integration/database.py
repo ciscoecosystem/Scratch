@@ -8,7 +8,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure
 # absolute import
 # from consumer.logger import Logger
 # relative import
-from ..logger import Logger
+from .logger import Logger
 
 # TODO handle pymongo.errors
 class Database:
@@ -20,7 +20,7 @@ class Database:
             self.client = MongoClient(host, port, serverSelectionTimeoutMS=1000)
             self.client.admin.command('ismaster') # cheap/no auth connection check
         except ConnectionFailure as error:
-            self.logger.error("Connection to database failed")
+            self.logger.error("Connection to database failed. Error = "+str(error))
             # TODO exit
             self.logger.error("Shutting down")
             # os.kill(os.getpid(), signal.SIGINT)
