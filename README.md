@@ -1,11 +1,11 @@
--Kafka validations that topic should exist before consumer is started , prod->trans->consumer configurations should follow this sequence
--On kafka validation earlier the topic was getting created , now the topic shall be created on save click
--Kafka python libraries synced in producer and consumer
--producer avro tested without beam
--consumer avro non tested 
--kafka topic names changed to producer topic and consumer topic
--mapper logic integration and tested without beam
--frammework structure.
+- Kafka validations that topic should exist before consumer is started , prod->trans->consumer configurations should follow this sequence
+- On kafka validation earlier the topic was getting created , now the topic shall be created on save click
+- Kafka python libraries synced in producer and consumer
+- producer avro tested without beam
+- consumer avro non tested 
+- kafka topic names changed to producer topic and consumer topic
+- mapper logic integration and tested without beam
+- frammework structure.
 
 
 
