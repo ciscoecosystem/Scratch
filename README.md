@@ -1,3 +1,4 @@
+Code changes that are in this branch
 - Kafka validations that topic should exist before consumer is started , prod->trans->consumer configurations should follow this sequence
 - On kafka validation earlier the topic was getting created , now the topic shall be created on save click
 - Kafka python libraries synced in producer and consumer
