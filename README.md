@@ -1,3 +1,17 @@
+-Kafka validations that topic should exist before consumer is started , prod->trans->consumer configurations should follow this sequence
+-On kafka validation earlier the topic was getting created , now the topic shall be created on save click
+-Kafka python libraries synced in producer and consumer
+-producer avro tested without beam
+-consumer avro non tested 
+-kafka topic names changed to producer topic and consumer topic
+-mapper logic integration and tested without beam
+-frammework structure.
+
+
+
+
+
+
 # Designing for ecohub
 
 Building a Docker image for use with ecohub requires adherence to a few simple guidelines that will be described in this document. In return, your users get access to a rich user interface where data entry, log parsing, and scheduling work is simplified.
