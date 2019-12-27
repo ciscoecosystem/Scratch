@@ -17,7 +17,7 @@
       "0.1"
     ],
     "latest": "0.1",
-    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework/ecoScripts/service_now/consumer",
+    "path": "https://raw.githubusercontent.com/ciscoecosystem/Scratch/aurora-integration-framework-avro/ecoScripts/service_now/consumer",
     "icon": "icon.png",
     "tags": "servicenow",
     "required_targets": [

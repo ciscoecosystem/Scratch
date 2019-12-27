@@ -1,9 +1,9 @@
 # Figure out what version of centos, etc. to use
-FROM centos:latest
+FROM centos:centos7
 LABEL Project=ecoHub Name=Aurora Version=0.0.1
 
 
-RUN yum install -y mongodb-org
+#RUN yum install -y mongodb-org
 
 # install yum requirements
 RUN yum install -y centos-release-scl gcc

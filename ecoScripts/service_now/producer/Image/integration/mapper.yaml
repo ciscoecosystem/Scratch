@@ -12,3 +12,7 @@ rel:
     parent: parent
     child: child
     type: type
+
+delete:
+    payload: payload
+    tablename: tablename
