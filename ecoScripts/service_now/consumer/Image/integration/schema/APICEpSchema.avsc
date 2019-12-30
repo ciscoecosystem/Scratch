@@ -3,12 +3,12 @@
     "type": "record",
     "name": "APICEpInfo",
     "fields": [
-        {"name":"uuid", "type":"string"},
-        {"name":"name", "type":"string"},
-        {"name":"sys_id","type":"string"},
-        {"name":"ip_address","type":"string"},
-        {"name":"mac_address","type":"string"},
-        {"name":"epg","type":"string"},
-        {"name":"status","type":"string"}
+        {"name":"uuid", "type":["string", "null"]},
+        {"name":"name", "type":["string", "null"]},
+        {"name":"sys_id", "type":["string", "null"]},
+        {"name":"ip_address", "type":["string", "null"]},
+        {"name":"mac_address", "type":["string", "null"]},
+        {"name":"epg", "type":["string", "null"]},
+        {"name":"status", "type":["string", "null"]}
     ]
 }

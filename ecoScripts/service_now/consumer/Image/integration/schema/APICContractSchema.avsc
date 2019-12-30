@@ -3,11 +3,11 @@
     "type": "record",
     "name": "APICContractInfo",
     "fields": [
-        {"name":"uuid", "type":"string"},
-        {"name":"name", "type":"string"},
-        {"name":"provider_epg","type":"string"},
-        {"name":"consumer_epg","type":"string"},
-        {"name":"reltype","type":"string"},
-        {"name":"status","type":"string"}
+        {"name":"uuid", "type":["string", "null"]},
+        {"name":"name", "type":["string", "null"]},
+        {"name":"provider_epg", "type":["string", "null"]},
+        {"name":"consumer_epg", "type":["string", "null"]},
+        {"name":"reltype", "type":["string", "null"]},
+        {"name":"status","type":["string", "null"]}
     ]
 }

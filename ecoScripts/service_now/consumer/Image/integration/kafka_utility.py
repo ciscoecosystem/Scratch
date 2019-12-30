@@ -67,6 +67,7 @@ class kafka_utils:
     def get_consumer(self):
         return self.consumer
     def unparse_avro_from_kafka(self, msg, schema_path, from_kafka):
+        schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), schema_path)
         schema = avro.schema.Parse(open(schema_path, 'r').read())
         if from_kafka:
             msg = msg.value
@@ -74,6 +75,5 @@ class kafka_utils:
         decoder = avro.io.BinaryDecoder(bytes_reader)
         reader = avro.io.DatumReader(schema)
         data = reader.read(decoder)
-        data = json.loads(data)
         return data
     

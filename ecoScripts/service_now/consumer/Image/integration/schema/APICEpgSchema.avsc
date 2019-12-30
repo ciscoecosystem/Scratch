@@ -3,11 +3,11 @@
     "type": "record",
     "name": "APICEpgInfo",
     "fields": [
-        {"name":"uuid", "type":"string"},
-        {"name":"name", "type":"string"},
-        {"name":"members","type":{"type":"array","item":"string"}},
-        {"name":"downstream_reltype","type":{"type":"array","item":"string"}},
-        {"name":"upstream_reltype","type":{"type":"array","item":"string"}},
-        {"name":"status","type":"string"}
+        {"name":"uuid", "type":["string", "null"]},
+        {"name":"name", "type":["string", "null"]},
+        {"name":"members","type":[{"type": "array","items": "string"}, "null"]},
+        {"name":"downstream_reltype","type":[{"type": "array","items": "string"}, "null"]},
+        {"name":"upstream_reltype","type":[{"type": "array","items": "string"}, "null"]},
+        {"name":"status","type":["string", "null"]}
     ]
 }

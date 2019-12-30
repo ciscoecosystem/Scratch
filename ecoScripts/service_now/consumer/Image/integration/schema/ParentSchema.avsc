@@ -3,7 +3,7 @@
     "type": "record",
     "name": "ParentSchema",
     "fields": [
-       {"name": "result", "type": {"type": "array", "items": "bytes"}},
+       {"name": "result", "type": "bytes"},
        {"name": "discovery_source",  "type": ["string", "null"]},
        {"name": "source_instance",  "type": ["string", "null"]},
        {"name": "category",  "type": ["string", "null"]}

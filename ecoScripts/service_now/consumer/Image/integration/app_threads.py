@@ -82,8 +82,8 @@ class ConsumerThread(AuroraThread):
     Set up APIC, Kafka consumer, and database and wait for messages on Kafka
     Take each message and process them based on message type
     """
-    PARENT_SCHEMA = '.\schema\ParentSchema.avsc'
-    CHILD_SCHEMA = {'ep':'.\schema\APICEpSchema.avsc','epg':'.\schema\APICEpgSchema.avsc','contract':'.\schema\APICContractSchema.avsc'}
+    PARENT_SCHEMA = 'schema/ParentSchema.avsc'
+    CHILD_SCHEMA = {'ep':'schema/APICEpSchema.avsc','epg':'schema/APICEpgSchema.avsc','contract':'schema/APICContractSchema.avsc'}
     def __init__(self, exit, lock):
         super(ConsumerThread, self).__init__(exit, lock)
 
@@ -142,7 +142,7 @@ class ConsumerThread(AuroraThread):
                 props = self.kafka_utils.unparse_avro_from_kafka(msg, self.PARENT_SCHEMA,True)
                 category = props['category']
                 del props['category']
-                props = self.kafka_utils.unparse_avro_from_kafka(props, self.CHILD_SCHEMA.get(category),False)                                 
+                props = self.kafka_utils.unparse_avro_from_kafka(props['result'], self.CHILD_SCHEMA.get(category),False)                                 
                 props['_id'] = props['uuid']
                 status = props['status']
                 del props['uuid'], props['status']
