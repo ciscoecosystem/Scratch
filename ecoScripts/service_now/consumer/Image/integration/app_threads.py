@@ -164,7 +164,7 @@ class ConsumerThread(AuroraThread):
             self.logger.error("Dumping message to error topic {}".format(str(e.data)))
             error_topic = self.kafka_utils.get_consumer_error_topic()
             self.kafka_utils.create_producer_topic(error_topic)
-            self.kafka_utils.write_data(str(e.data))
+            self.kafka_utils.write_data(str.encode(str(e.data)))
 
 
     def process_endpoint_message(self, props, status):
