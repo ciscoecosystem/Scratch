@@ -16,8 +16,8 @@ pigeon = Pigeon()
 def test_kafka(create_topics=False):
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
-    inp_topic = os.getenv('PRODUCER_TOPIC')
-    out_topic = os.getenv('CONSUMER_TOPIC')
+    inp_topic = str(os.getenv('PRODUCER_TOPIC'))
+    out_topic = str(os.getenv('CONSUMER_TOPIC'))
 
     input_error_topic = "error_" + inp_topic
 

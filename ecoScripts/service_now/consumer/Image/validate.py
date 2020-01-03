@@ -91,7 +91,7 @@ def test_aci():
 def test_kafka(create_topics=False):
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
-    out_topic = os.getenv('CONSUMER_TOPIC')
+    out_topic = str(os.getenv('CONSUMER_TOPIC'))
 
     output_error_topic = "error_" + out_topic
 

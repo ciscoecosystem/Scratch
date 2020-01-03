@@ -59,7 +59,7 @@ def test_snow():
 def test_kafka(create_topics=False):
     kafka_ip = os.getenv('KAFKA_HOSTNAME')
     kafka_port = os.getenv('KAFKA_PORT')
-    inp_topic = os.getenv('PRODUCER_TOPIC')
+    inp_topic = str(os.getenv('PRODUCER_TOPIC'))
 
     offset_topic = "offset_" + inp_topic
     try:
