@@ -75,28 +75,22 @@ def test_kafka(create_topics=False):
         for each in existing_topics:
             existing_topics_list.append(each.decode("utf-8"))
             
-        topic_exists = False
         for curr_topic in data_topics:
-            if curr_topic not in existing_topics_list:
-                #it will create new topic pa
-                if create_topics:
-                    client.topics[curr_topic]
-                    #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka \
-                    # so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
-                    #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
-                    pigeon.sendInfoMessage("Topics created")
-            else:
-                pigeon.sendInfoMessage("Topic already exists: " + curr_topic)
-                topic_exists = True
-            
-
-
-        if topic_exists:
-            pigeon.sendUpdate({
+            if curr_topic in existing_topics_list:
+                pigeon.sendUpdate({
                 'status': 'error',
-                'message': 'Topic already exists.Please enter different input and output topic names.'
-            })
-            return False
+                'message': "Topic already exists: " + curr_topic
+                })
+                return False
+                                
+        if create_topics:
+            for curr_topic in data_topics:
+                #it will create new topic
+                client.topics[curr_topic]
+                pigeon.sendInfoMessage("Topic created: "+ curr_topic)
+                #Below line is for creating new topic with python-kafka library. Since we are migrating to PyKafka \
+                # so removing this. TODO find alternative way to specify number of partitions and replication factor while creating topic in PyKafka lib.
+                #create_topics = [NewTopic(curr_topic, num_partitions=1, replication_factor=1)]
 
     except Exception as error:
         pigeon.sendUpdate({
