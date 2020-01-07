@@ -95,6 +95,13 @@ class ConsumerThread(AuroraThread):
         self.config['mongo_host'] = os.getenv('MONGO_HOST')
         self.config['mongo_port'] = int(os.getenv('MONGO_PORT'))
 
+    def get_epg_from_db(self,key):
+        epg = self.db.get_epg(key)
+        if epg is None:
+            self.logger.error('Epg not found')
+            raise Exception("Epg not found")
+        return epg
+    
     def run(self):
         self.logger.info("Reading configuration from file")
         self.set_config()
@@ -179,8 +186,8 @@ class ConsumerThread(AuroraThread):
                 if not endpoint:
                     self.db.insert_endpoint(props)
                     self.logger.info("Added endpoint {} to DB".format(props['name']))
-
-                    ep_res = self.create_ep(tenant, ap, self.db.get_epg(props['epg'])['name'], props)
+                    epg_name = self.get_epg_from_db(props['epg'])['name']
+                    ep_res = self.create_ep(tenant, ap, epg_name, props)
                     if ep_res == 'Successful':
                         self.logger.info('Successfully created EP in APIC')
                     else:
@@ -192,14 +199,15 @@ class ConsumerThread(AuroraThread):
 
                     if props['epg'] != endpoint['epg']:
                         # For update, first delete and then create
-                        ep_res_del = self.create_ep(tenant, ap, self.db.get_epg(endpoint['epg'])['name'], props, delete=True)
+                        epg_name = self.get_epg_from_db(endpoint['epg'])['name']
+                        ep_res_del = self.create_ep(tenant, ap, epg_name, props, delete=True)
                         if ep_res_del == 'Successful':
                             self.logger.info('Successfully deleted EP in APIC')
                         else:
                             self.logger.info('EP deletion failed for EP {}, Error: {}'.format(endpoint, ep_res_del))
                             raise CheckpointException('EP', 'APIC', props, ep_res_del)
-
-                        ep_res = self.create_ep(tenant, ap, self.db.get_epg(props['epg'])['name'], props)
+                        epg_name = self.get_epg_from_db(props['epg'])['name']
+                        ep_res = self.create_ep(tenant, ap, epg_name, props)
                         if ep_res == 'Successful':
                             self.logger.info('Successfully created EP in APIC')
                         else:
@@ -218,7 +226,8 @@ class ConsumerThread(AuroraThread):
                 if not endpoint:
                     self.logger.info("Endpoint does not exist")
                 else:
-                    ep_res = self.create_ep(tenant, ap, self.db.get_epg(endpoint['epg'])['name'], props, delete=True)
+                    epg_name = self.get_epg_from_db(endpoint['epg'])['name']
+                    ep_res = self.create_ep(tenant, ap, epg_name, props, delete=True)
                     if ep_res == 'Successful':
                         self.logger.info('Successfully deleted EP in APIC')
                     else:
@@ -238,7 +247,7 @@ class ConsumerThread(AuroraThread):
 
         try:
             tenant = self.config['tenant']
-            ap = self.config['application_profile']
+            ap = selgrof.config['application_profile']
 
             if status == 'create' or status == 'update':
                 # get EPG if exists
@@ -280,7 +289,7 @@ class ConsumerThread(AuroraThread):
                     props['name'] = epg['name']
                     # The message is received from beam do not have 'members' in it
                     # thus fetch members from db
-                    for member in self.db.get_epg(props['_id'])['members']:
+                    for member in epg['members']:
                         self.db.delete_endpoint(member, identifier='name')
                         self.logger.info("Deleted EP {} from DB".format(member))
                     self.db.delete_epg(props['_id'])
@@ -343,10 +352,9 @@ class ConsumerThread(AuroraThread):
                 # Getting EPG name stored in DB using the uuid and put it into props
                 #to do
                 #we can remove these 2 lines
-                consumer_epg_name = self.db.get_epg(props['consumer_epg'])
-                provider_epg_name = self.db.get_epg(props['provider_epg'])
-                props['consumer_epg'] = consumer_epg_name['name']
-                props['provider_epg'] = provider_epg_name['name']
+                props['consumer_epg'] = self.get_epg_from_db(props['consumer_epg'])['name']
+                props['provider_epg'] = self.get_epg_from_db(props['provider_epg'])['name']
+
 
                 # `contract` represents old entry in DB
                 # `props` represents new to be updated entry
