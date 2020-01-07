@@ -202,7 +202,7 @@ class ConsumerThread(AuroraThread):
                     if props['epg'] != endpoint['epg']:
                         # For update, first delete and then create
                         
-                        epg_name = self.get_epg_from_db(endpoint['epg'])['name']
+                        epg_name = self.get_epg_from_db(props['epg'])['name']
                         ep_res_del = self.create_ep(tenant, ap, epg_name, props, delete=True)
                         if ep_res_del == 'Successful':
                             self.logger.info('Successfully deleted EP in APIC')
