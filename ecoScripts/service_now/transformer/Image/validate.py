@@ -23,7 +23,8 @@ def test_kafka(create_topics=False):
 
     try:
         host = '{}:{}'.format(kafka_ip, kafka_port)
-        client = KafkaClient(hosts=host)
+        #There is some issue in pykafka library. Here 3000 ms = 30 seconds
+        client = KafkaClient(hosts=host, socket_timeout_ms=3000)
 
         pigeon.sendInfoMessage("Kafka connected successfully")
         pigeon.sendInfoMessage("Testing Kafka Input/Output topic")
