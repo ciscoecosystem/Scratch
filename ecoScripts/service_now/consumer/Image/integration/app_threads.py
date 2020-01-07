@@ -95,13 +95,15 @@ class ConsumerThread(AuroraThread):
         self.config['mongo_host'] = os.getenv('MONGO_HOST')
         self.config['mongo_port'] = int(os.getenv('MONGO_PORT'))
 
-    def get_epg_from_db(self,key):
+
+    def get_epg_from_db(self, key):
         epg = self.db.get_epg(key)
         if epg is None:
             self.logger.error('Epg not found')
             raise Exception("Epg not found")
         return epg
-    
+
+
     def run(self):
         self.logger.info("Reading configuration from file")
         self.set_config()
@@ -199,6 +201,7 @@ class ConsumerThread(AuroraThread):
 
                     if props['epg'] != endpoint['epg']:
                         # For update, first delete and then create
+                        
                         epg_name = self.get_epg_from_db(endpoint['epg'])['name']
                         ep_res_del = self.create_ep(tenant, ap, epg_name, props, delete=True)
                         if ep_res_del == 'Successful':
@@ -247,7 +250,7 @@ class ConsumerThread(AuroraThread):
 
         try:
             tenant = self.config['tenant']
-            ap = selgrof.config['application_profile']
+            ap = self.config['application_profile']
 
             if status == 'create' or status == 'update':
                 # get EPG if exists

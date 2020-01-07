@@ -26,8 +26,8 @@ class kafka_utils:
             self.kafka_error_topic = 'error_' + self.consumer_topic
 
     def create_kafka_client(self):
-        #There is some issue in pykafka library. Here 3000 ms = 30 seconds
-        self.client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port), socket_timeout_ms=3000)
+        #There is some issue in pykafka library. Here 1000 ms = 10 seconds
+        self.client = KafkaClient(hosts='{}:{}'.format(self.kafka_hostname, self.kafka_port), socket_timeout_ms=1000)
 
     def convert_to_schema(self, data, schema_path):
         schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), schema_path)
